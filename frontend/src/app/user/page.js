@@ -1,6 +1,9 @@
 'use client'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
 
 const page = () => {
     const [users, setUsers] = useState([])
@@ -28,12 +31,19 @@ const page = () => {
     }
 
     return (
-        <div>
-            {users &&
-                users.map((user, index) => <div key={index}>{user.name}</div>)}
-            <button onClick={displayFirstUser}>id1のユーザーだけ</button>
-            <button onClick={displayAllUser}>全て</button>
-        </div>
+        <>
+            <div>
+                {users &&
+                    users.map((user, index) => (
+                        <div key={index}>{user.name}</div>
+                    ))}
+                <button onClick={displayFirstUser}>id1のユーザーだけ</button>
+                <button onClick={displayAllUser}>全て</button>
+            </div>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DateCalendar />
+            </LocalizationProvider>
+        </>
     )
 }
 
