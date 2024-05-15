@@ -1,22 +1,65 @@
+'use client'
 import Header from '@/app/(app)/Header'
-
-export const metadata = {
-    title: 'Laravel - Dashboard',
-}
+import React, { useState } from 'react'
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    TextField,
+    DialogActions,
+    Button,
+} from '@mui/material'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from '@fullcalendar/interaction'
 
 const Dashboard = () => {
+    const [selectedDate, setSelectedDate] = useState(null)
+    const [open, setOpen] = useState(false)
+    const [amount, setAmount] = useState('')
+
+    const handleDateChange = info => {
+        console.log(info)
+        setSelectedDate(info.dateStr)
+        setOpen(true)
+    }
+
+    const handleClose = () => {
+        setOpen(false)
+    }
+
+    const handleAmountChange = event => {
+        setAmount(event.target.value)
+    }
     return (
         <>
             <Header title="Dashboard" />
-            <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 bg-white border-b border-gray-200">
-                            You are logged in!
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+            <FullCalendar
+                locale="ja"
+                plugins={[dayGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                dateClick={handleDateChange}
+            />
+
+            <Dialog open={open} onClose={handleClose}>
+                <DialogTitle>収支入力</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="金額"
+                        type="number"
+                        fullWidth
+                        value={amount}
+                        onChange={handleAmountChange}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose}>キャンセル</Button>
+                    <Button onClick={handleClose}>保存</Button>
+                </DialogActions>
+            </Dialog>
         </>
     )
 }
