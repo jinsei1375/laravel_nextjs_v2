@@ -15,6 +15,7 @@ import {
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import axios from 'axios'
 
 const Dashboard = () => {
     const [selectedDate, setSelectedDate] = useState(null)
@@ -26,8 +27,21 @@ const Dashboard = () => {
     const [categories, setCategories] = useState([])
 
     useEffect(() => {
-        setCategories(['food', 'tranport'])
+        fetchCategories()
     }, [])
+
+    const fetchCategories = async () => {
+        try {
+            const userId = 1
+            const response = await axios.get(
+                `http://localhost/api/${userId}/categories`,
+            )
+            console.log(response.data)
+            setCategories(response.data)
+        } catch (err) {
+            console.log(err)
+        }
+    }
 
     const handleDateChange = info => {
         console.log(info)
@@ -91,7 +105,8 @@ const Dashboard = () => {
                     <List>
                         {categories.map((cat, index) => (
                             <ListItem key={index}>
-                                <ListItemText primary={cat} />
+                                <ListItemText primary={cat.name} />
+                                <ListItemText primary={cat.type} />
                             </ListItem>
                         ))}
                     </List>

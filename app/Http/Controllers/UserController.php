@@ -12,4 +12,9 @@ class UserController extends Controller
         $users = User::all();
         return response()->json($users);
     }
+
+    public function getCategories(User $user)
+    {
+        return $user->categories;
+    }
 }
