@@ -16,6 +16,7 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import axios from 'axios'
+import { useUser } from '@/hooks/useUser'
 
 const Dashboard = () => {
     const [selectedDate, setSelectedDate] = useState(null)
@@ -26,17 +27,20 @@ const Dashboard = () => {
     const [category, setCategory] = useState('')
     const [categories, setCategories] = useState([])
 
+    const { user, locading } = useUser()
+
     useEffect(() => {
-        fetchCategories()
-    }, [])
+        if (user) {
+            fetchCategories()
+        }
+    }, [user])
 
     const fetchCategories = async () => {
         try {
-            const userId = 1
+            const userId = user.id
             const response = await axios.get(
                 `http://localhost/api/${userId}/categories`,
             )
-            console.log(response.data)
             setCategories(response.data)
         } catch (err) {
             console.log(err)
