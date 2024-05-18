@@ -22,11 +22,14 @@ import {
 import { useAuth } from '@/hooks/auth'
 import axios from '@/lib/axios'
 import { DataGrid } from '@mui/x-data-grid'
+import { set } from 'react-hook-form'
 
 const Category = () => {
     const [openAddCategory, setOpenAddCategory] = useState(false)
     const [category, setCategory] = useState('')
     const [categories, setCategories] = useState([])
+    const [incomeCategories, setIncomeCategories] = useState([])
+    const [expenseCategories, setExpenseCategories] = useState([])
     const [type, setType] = useState('expense')
 
     const { user } = useAuth({ middleware: 'auth' })
@@ -57,9 +60,20 @@ const Category = () => {
         try {
             const userId = user.id
             const response = await axios.get(
-                `http://localhost/api/${userId}/category`,
+                `http://localhost/api/${userId}/category/`,
             )
-            setCategories(response.data)
+            // console.log(response.data)
+            const fetchedCategories = response.data
+            setCategories(fetchedCategories)
+            const filteredExpenseCategories = fetchedCategories.filter(
+                cat => cat.type === 'expense',
+            )
+            setExpenseCategories(filteredExpenseCategories)
+            const filteredIncomeCategories = fetchedCategories.filter(
+                cat => cat.type === 'income',
+            )
+            setIncomeCategories(filteredIncomeCategories)
+            console.log(filteredExpenseCategories)
         } catch (err) {
             console.log(err)
         }
@@ -100,7 +114,11 @@ const Category = () => {
     return (
         <>
             <Header title="Setting" />
+            <Button onClick={() => setOpenAddCategory(true)}>
+                カテゴリー追加
+            </Button>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                {/* 支出カテゴリー一覧 */}
                 <Box sx={{ width: '50%' }}>
                     <Typography variant="h6">支出カテゴリー</Typography>
                     <Box>
@@ -120,6 +138,7 @@ const Category = () => {
                         />
                     </Box>
                 </Box>
+                {/* 収入カテゴリー一覧 */}
                 <Box sx={{ width: '50%' }}>
                     <Typography variant="h6">収入カテゴリー</Typography>
                     <Box>

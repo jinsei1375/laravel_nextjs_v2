@@ -54,31 +54,6 @@ const Top = () => {
         }
     }
 
-    // 新規カテゴリー追加処理
-    const handleAddCategory = async () => {
-        try {
-            console.log(category, type)
-            const userId = user.id
-            const response = await axios.post(
-                `http://localhost/api/${userId}/category`,
-                { name: category, type: type },
-            )
-
-            if (response.status === 200) {
-                setCategories(oldCategories => [
-                    ...oldCategories,
-                    response.data,
-                ])
-                setCategory('')
-                // setOpenAddCategory(false)
-            } else {
-                console.log('Error occurred while adding category')
-            }
-        } catch (err) {
-            console.log(err)
-        }
-    }
-
     const handleDateChange = info => {
         console.log(info)
         setSelectedDate(info.dateStr)
@@ -145,43 +120,6 @@ const Top = () => {
                         ))}
                     </List>
                 </DialogContent>
-                <DialogTitle>カテゴリー追加</DialogTitle>
-                <DialogContent>
-                    <FormControl component="fieldset">
-                        <FormLabel component="legend">支出 or 収入</FormLabel>
-                        <RadioGroup
-                            aria-label="type"
-                            name="type"
-                            value={type}
-                            onChange={handleTypeChange}>
-                            <FormControlLabel
-                                value="expense"
-                                control={<Radio />}
-                                label="支出"
-                            />
-                            <FormControlLabel
-                                value="income"
-                                control={<Radio />}
-                                label="収入"
-                            />
-                        </RadioGroup>
-                    </FormControl>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="カテゴリー名"
-                        type="text"
-                        fullWidth
-                        value={category}
-                        onChange={handleCategoryChange}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenAddCategory(false)}>
-                        キャンセル
-                    </Button>
-                    <Button onClick={handleAddCategory}>保存</Button>
-                </DialogActions>
             </Dialog>
         </>
     )

@@ -17,6 +17,18 @@ class CategoryController extends Controller
         return $user->categories;
     }
 
+    public function getIncomeAndExpenseCategories(User $user)
+    {
+        $categories = $user->categories;
+        $incomeCategories = $categories->where('type', 'income');
+        $expenseCategories = $categories->where('type', 'expense');
+
+        return response()->json([
+            'income' => $incomeCategories,
+            'expense' => $expenseCategories
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
