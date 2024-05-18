@@ -23,7 +23,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { useAuth } from '@/hooks/auth'
 import axios from '@/lib/axios'
 
-const Dashboard = () => {
+const Top = () => {
     const [selectedDate, setSelectedDate] = useState(null)
     const [open, setOpen] = useState(false)
     const [openAddCategoryList, setOpenAddCategoryList] = useState(false)
@@ -103,7 +103,7 @@ const Dashboard = () => {
 
     return (
         <>
-            <Header title="Dashboard" />
+            <Header title="Top" />
 
             <Button onClick={() => setOpenAddCategory(true)}>カテゴリー</Button>
             <FullCalendar
@@ -187,4 +187,4 @@ const Dashboard = () => {
     )
 }
 
-export default Dashboard
+export default Top

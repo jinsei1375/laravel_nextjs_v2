@@ -23,7 +23,7 @@ const Navigation = ({ user }) => {
                     <div className="flex">
                         {/* Logo */}
                         <div className="flex-shrink-0 flex items-center">
-                            <Link href="/dashboard">
+                            <Link href="/monthly">
                                 <ApplicationLogo className="block h-10 w-auto fill-current text-gray-600" />
                             </Link>
                         </div>
@@ -31,9 +31,14 @@ const Navigation = ({ user }) => {
                         {/* Navigation Links */}
                         <div className="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                             <NavLink
-                                href="/dashboard"
-                                active={usePathname() === '/dashboard'}>
-                                Dashboard
+                                href="/monthly"
+                                active={usePathname() === '/'}>
+                                Top
+                            </NavLink>
+                            <NavLink
+                                href="/category"
+                                active={usePathname() === '/category'}>
+                                Category
                             </NavLink>
                         </div>
                     </div>
@@ -106,13 +111,18 @@ const Navigation = ({ user }) => {
                 <div className="block sm:hidden">
                     <div className="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink
-                            href="/dashboard"
-                            active={usePathname() === '/dashboard'}>
-                            Dashboard
+                            href="/monthly"
+                            active={usePathname() === '/monthly'}>
+                            Top
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href="/category"
+                            active={usePathname() === '/category'}>
+                            Category
                         </ResponsiveNavLink>
                     </div>
 
-                    {/* Responsive Settings Options */}
+                    {/* Responsive categorys Options */}
                     <div className="pt-4 pb-1 border-t border-gray-200">
                         <div className="flex items-center px-4">
                             <div className="flex-shrink-0">
