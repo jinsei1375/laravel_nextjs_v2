@@ -44,18 +44,20 @@ const Category = () => {
         },
     ]
 
-    const rows = [
-        { id: 1, name: 'Snow' },
-        { id: 2, name: 'Lannister' },
-    ]
+    const expenseRows = expenseCategories.map((cat, index) => {
+        return { id: index + 1, name: cat.name }
+    })
+    const incomeRows = incomeCategories.map((cat, index) => {
+        return { id: index + 1, name: cat.name }
+    })
 
     useEffect(() => {
         if (user) {
             fetchCategories()
         }
-    }, [user])
+    }, [user, categories])
 
-    // カテゴリー一覧取得処理
+    // タイプごとのカテゴリー一覧取得処理
     const fetchCategories = async () => {
         try {
             const userId = user.id
@@ -64,7 +66,8 @@ const Category = () => {
             )
             // console.log(response.data)
             const fetchedCategories = response.data
-            setCategories(fetchedCategories)
+            // setCategories(fetchedCategories)
+
             const filteredExpenseCategories = fetchedCategories.filter(
                 cat => cat.type === 'expense',
             )
@@ -95,7 +98,7 @@ const Category = () => {
                     response.data,
                 ])
                 setCategory('')
-                // setOpenAddCategory(false)
+                setOpenAddCategory(false)
             } else {
                 console.log('Error occurred while adding category')
             }
@@ -103,6 +106,7 @@ const Category = () => {
             console.log(err)
         }
     }
+
     const handleCategoryChange = event => {
         setCategory(event.target.value)
     }
@@ -123,7 +127,7 @@ const Category = () => {
                     <Typography variant="h6">支出カテゴリー</Typography>
                     <Box>
                         <DataGrid
-                            rows={rows}
+                            rows={expenseRows}
                             columns={columns}
                             initialState={{
                                 pagination: {
@@ -143,7 +147,7 @@ const Category = () => {
                     <Typography variant="h6">収入カテゴリー</Typography>
                     <Box>
                         <DataGrid
-                            rows={rows}
+                            rows={incomeRows}
                             columns={columns}
                             initialState={{
                                 pagination: {
@@ -162,17 +166,6 @@ const Category = () => {
             <Dialog
                 open={openAddCategory}
                 onClose={() => setOpenAddCategory(false)}>
-                <DialogTitle>カテゴリー一覧</DialogTitle>
-                <DialogContent>
-                    <List>
-                        {categories.map((cat, index) => (
-                            <ListItem key={index}>
-                                <ListItemText primary={cat.name} />
-                                <ListItemText primary={cat.type} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </DialogContent>
                 <DialogTitle>カテゴリー追加</DialogTitle>
                 <DialogContent>
                     <FormControl component="fieldset">
