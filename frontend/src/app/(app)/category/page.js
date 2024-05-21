@@ -1,6 +1,6 @@
 'use client'
 import Header from '@/app/(app)/Header'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import {
     Dialog,
     DialogTitle,
@@ -8,9 +8,6 @@ import {
     TextField,
     DialogActions,
     Button,
-    List,
-    ListItem,
-    ListItemText,
     FormControl,
     FormLabel,
     RadioGroup,
@@ -22,7 +19,6 @@ import {
 import { useAuth } from '@/hooks/auth'
 import axios from '@/lib/axios'
 import { DataGrid } from '@mui/x-data-grid'
-import { set } from 'react-hook-form'
 
 const Category = () => {
     const [openAddCategory, setOpenAddCategory] = useState(false)
@@ -35,20 +31,20 @@ const Category = () => {
     const { user } = useAuth({ middleware: 'auth' })
 
     const columns = [
-        { field: 'id', headerName: 'ID', width: 90 },
+        { field: 'id', headerName: 'ID', width: 90, editable: false },
         {
             field: 'name',
             headerName: 'カテゴリー名',
-            width: 150,
+            width: 250,
             editable: true,
         },
     ]
 
     const expenseRows = expenseCategories.map((cat, index) => {
-        return { id: index + 1, name: cat.name }
+        return { id: index + 1, name: cat.name, categoryId: cat.id }
     })
     const incomeRows = incomeCategories.map((cat, index) => {
-        return { id: index + 1, name: cat.name }
+        return { id: index + 1, name: cat.name, categoryId: cat.id }
     })
 
     useEffect(() => {
@@ -107,6 +103,25 @@ const Category = () => {
         }
     }
 
+    // カテゴリー編集
+    const handleEditCategory = async (newRow, oldRow) => {
+        try {
+            console.log(newRow, oldRow)
+            const userId = user.id
+            const response = await axios.put(
+                `http://localhost/api/${userId}/category/${params.categoryId}`,
+                { name: params.name },
+            )
+            if (response.status === 200) {
+                fetchCategories()
+            } else {
+                console.log('Error occurred while adding category')
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
     const handleCategoryChange = event => {
         setCategory(event.target.value)
     }
@@ -137,8 +152,18 @@ const Category = () => {
                                 },
                             }}
                             pageSizeOptions={[5]}
-                            checkboxSelection
-                            disableRowSelectionOnClick
+                            // checkboxSelection
+                            onCellEditCommit={params => {
+                                const oldRow = params.row
+                                const newRow = {
+                                    ...oldRow,
+                                    [params.field]: params.value,
+                                }
+                                console.log(newRow, oldRow)
+                                handleEditCategory(newRow, oldRow)
+                            }}
+                            onProcessRowUpdateError={err => console.log(err)}
+                            experimentalFeatures={{ newEditingApi: true }}
                         />
                     </Box>
                 </Box>
@@ -146,7 +171,7 @@ const Category = () => {
                 <Box sx={{ width: '50%' }}>
                     <Typography variant="h6">収入カテゴリー</Typography>
                     <Box>
-                        <DataGrid
+                        {/* <DataGrid
                             rows={incomeRows}
                             columns={columns}
                             initialState={{
@@ -159,7 +184,7 @@ const Category = () => {
                             pageSizeOptions={[5]}
                             checkboxSelection
                             disableRowSelectionOnClick
-                        />
+                        /> */}
                     </Box>
                 </Box>
             </Box>

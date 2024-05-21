@@ -63,9 +63,12 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request, User $user, Category $category)
     {
-        //
+        $category->name = $request->name;
+        $category->save();
+
+        return response()->json($category);
     }
 
     /**
