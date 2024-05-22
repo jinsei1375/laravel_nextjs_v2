@@ -15,3 +15,4 @@ Route::get('/{user}/category', [CategoryController::class, 'index']);
 Route::get('/{user}/category/incomeexpense', [CategoryController::class, 'getIncomeAndExpenseCategories']);
 Route::post('/{user}/category', [CategoryController::class, 'store']);
 Route::put('/{user}/category/{category}', [CategoryController::class, 'edit']);
+Route::delete('/{user}/category/{category}', [CategoryController::class, 'destroy']);
