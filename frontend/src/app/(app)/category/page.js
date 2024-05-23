@@ -16,9 +16,10 @@ import {
 import { useEffect, useState } from 'react'
 import axios from '@/lib/axios'
 import { useAuth } from '@/hooks/auth'
+import { Typography } from '@mui/material'
 
-function EditToolbar(props) {
-    const { setExpenseRows, setRowModesModel, expenseRows } = props
+function EditExpenseToolbar(props) {
+    const { setExpenseRows, setExpenseRowModesModel, expenseRows } = props
 
     const handleClick = () => {
         const id = Math.max(...expenseRows.map(row => row.id), 0) + 1
@@ -26,7 +27,7 @@ function EditToolbar(props) {
             ...oldRows,
             { id, name: '', isNew: true, type: 'expense' },
         ])
-        setRowModesModel(oldModel => ({
+        setExpenseRowModesModel(oldModel => ({
             ...oldModel,
             [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
         }))
@@ -38,7 +39,34 @@ function EditToolbar(props) {
                 color="primary"
                 startIcon={<AddIcon />}
                 onClick={handleClick}>
-                Add record
+                カテゴリー追加
+            </Button>
+        </GridToolbarContainer>
+    )
+}
+
+function EditIncomeToolbar(props) {
+    const { setIncomeRows, setIncomeRowModesModel, incomeRows } = props
+
+    const handleClick = () => {
+        const id = Math.max(...incomeRows.map(row => row.id), 0) + 1
+        setIncomeRows(oldRows => [
+            ...oldRows,
+            { id, name: '', isNew: true, type: 'income' },
+        ])
+        setIncomeRowModesModel(oldModel => ({
+            ...oldModel,
+            [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+        }))
+    }
+
+    return (
+        <GridToolbarContainer>
+            <Button
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleClick}>
+                カテゴリー追加
             </Button>
         </GridToolbarContainer>
     )
@@ -47,10 +75,12 @@ function EditToolbar(props) {
 export default function FullFeaturedCrudGrid() {
     const [expenseCategories, setExpenseCategories] = useState([])
     const [expenseRows, setExpenseRows] = useState([])
-    const [rowModesModel, setRowModesModel] = useState({})
+    const [incomeCategories, setIncomeCategories] = useState([])
+    const [incomeRows, setIncomeRows] = useState([])
+    const [expenseRowModesModel, setExpenseRowModesModel] = useState({})
+    const [incomeRowModesModel, setIncomeRowModesModel] = useState({})
 
     const { user } = useAuth({ middleware: 'auth' })
-
     const userId = user.id
 
     useEffect(() => {
@@ -72,35 +102,83 @@ export default function FullFeaturedCrudGrid() {
         setExpenseRows(newExpenseRows)
     }, [expenseCategories])
 
+    useEffect(() => {
+        const newIncomeRows = incomeCategories.map((cat, index) => {
+            return {
+                id: index + 1,
+                name: cat.name,
+                categoryId: cat.id,
+                type: cat.type,
+            }
+        })
+        console.log(newIncomeRows)
+        setIncomeRows(newIncomeRows)
+    }, [incomeCategories])
+
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
             event.defaultMuiPrevented = true
         }
     }
 
-    const handleEditClick = id => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.Edit },
-        })
+    const handleEditClick = (id, type) => () => {
+        console.log('handleEditClick called with id:', id, 'and type:', type)
+        if (type === 'expense') {
+            setExpenseRowModesModel({
+                ...expenseRowModesModel,
+                [id]: { mode: GridRowModes.Edit },
+            })
+            console.log(
+                'expenseRowModesModel after update:',
+                expenseRowModesModel,
+            )
+        } else if (type === 'income') {
+            setIncomeRowModesModel({
+                ...incomeRowModesModel,
+                [id]: { mode: GridRowModes.Edit },
+            })
+            console.log(
+                'incomeRowModesModel after update:',
+                incomeRowModesModel,
+            )
+        }
     }
 
-    const handleSaveClick = id => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View },
-        })
+    const handleSaveClick = (id, type) => () => {
+        if (type === 'expense') {
+            setExpenseRowModesModel({
+                ...expenseRowModesModel,
+                [id]: { mode: GridRowModes.View },
+            })
+        } else if (type === 'income') {
+            setIncomeRowModesModel({
+                ...incomeRowModesModel,
+                [id]: { mode: GridRowModes.View },
+            })
+        }
     }
 
-    const handleCancelClick = id => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View, ignoreModifications: true },
-        })
+    const handleCancelClick = (id, type) => () => {
+        if (type === 'expense') {
+            setExpenseRowModesModel({
+                ...expenseRowModesModel,
+                [id]: { mode: GridRowModes.View, ignoreModifications: true },
+            })
 
-        const editedRow = expenseRows.find(row => row.id === id)
-        if (editedRow.isNew) {
-            setExpenseRows(expenseRows.filter(row => row.id !== id))
+            const editedRow = expenseRows.find(row => row.id === id)
+            if (editedRow.isNew) {
+                setExpenseRows(expenseRows.filter(row => row.id !== id))
+            }
+        } else if (type === 'income') {
+            setIncomeRowModesModel({
+                ...incomeRowModesModel,
+                [id]: { mode: GridRowModes.View, ignoreModifications: true },
+            })
+
+            const editedRow = incomeRows.find(row => row.id === id)
+            if (editedRow.isNew) {
+                setIncomeRows(incomeRows.filter(row => row.id !== id))
+            }
         }
     }
 
@@ -115,8 +193,11 @@ export default function FullFeaturedCrudGrid() {
             const filteredExpenseCategories = fetchedCategories.filter(
                 cat => cat.type === 'expense',
             )
+            const filteredIncomeCategories = fetchedCategories.filter(
+                cat => cat.type === 'income',
+            )
             setExpenseCategories(filteredExpenseCategories)
-            console.log(filteredExpenseCategories)
+            setIncomeCategories(filteredIncomeCategories)
         } catch (err) {
             console.log(err)
         }
@@ -133,7 +214,11 @@ export default function FullFeaturedCrudGrid() {
                 )
 
                 if (response.status === 200) {
-                    setExpenseRows(oldRows => [...oldRows, response.data])
+                    if (newRow.type === 'expense') {
+                        setExpenseRows(oldRows => [...oldRows, response.data])
+                    } else if (newRow.type === 'income') {
+                        setIncomeRows(oldRows => [...oldRows, response.data])
+                    }
                 } else {
                     console.log('Error occurred while adding category')
                 }
@@ -147,11 +232,19 @@ export default function FullFeaturedCrudGrid() {
                     { name: newRow.name },
                 )
                 if (response.status === 200) {
-                    setExpenseRows(oldRows =>
-                        oldRows.map(row =>
-                            row.id === newRow.id ? response.data : row,
-                        ),
-                    )
+                    if (newRow.type === 'expense') {
+                        setExpenseRows(oldRows =>
+                            oldRows.map(row =>
+                                row.id === newRow.id ? response.data : row,
+                            ),
+                        )
+                    } else if (newRow.type === 'income') {
+                        setIncomeRows(oldRows =>
+                            oldRows.map(row =>
+                                row.id === newRow.id ? response.data : row,
+                            ),
+                        )
+                    }
                 } else {
                     console.log('Error occurred while adding category')
                 }
@@ -161,20 +254,40 @@ export default function FullFeaturedCrudGrid() {
         }
         console.log(newRow)
         const updatedRow = { ...newRow, isNew: false }
-        setExpenseRows(
-            expenseRows.map(row => (row.id === newRow.id ? updatedRow : row)),
-        )
+        if (newRow.type === 'expense') {
+            setExpenseRows(
+                expenseRows.map(row =>
+                    row.id === newRow.id ? updatedRow : row,
+                ),
+            )
+        } else if (newRow.type === 'income') {
+            setIncomeRows(
+                incomeRows.map(row =>
+                    row.id === newRow.id ? updatedRow : row,
+                ),
+            )
+        }
         return updatedRow
     }
 
-    const handleDeleteClick = id => async () => {
-        const targetRow = expenseRows.find(row => row.id === id)
+    // カテゴリー削除処理
+    const handleDeleteClick = (id, type) => async () => {
+        let targetRow = {}
+        if (type === 'expense') {
+            targetRow = expenseRows.find(row => row.id === id)
+        } else if (type === 'income') {
+            targetRow = incomeRows.find(row => row.id === id)
+        }
         try {
             const response = await axios.delete(
                 `http://localhost/api/${userId}/category/${targetRow.categoryId}`,
             )
             if (response.status === 200) {
-                setExpenseRows(expenseRows.filter(row => row.id !== id))
+                if (type === 'expense') {
+                    setExpenseRows(expenseRows.filter(row => row.id !== id))
+                } else if (type === 'income') {
+                    setIncomeRows(incomeRows.filter(row => row.id !== id))
+                }
                 console.log(response.data.message)
             } else {
                 console.log('Error occurred while adding category')
@@ -184,11 +297,16 @@ export default function FullFeaturedCrudGrid() {
         }
     }
 
-    const handleRowModesModelChange = newRowModesModel => {
-        setRowModesModel(newRowModesModel)
+    const handleExpenseRowModesModelChange = newRowModesModel => {
+        setExpenseRowModesModel(newRowModesModel)
     }
 
-    const columns = [
+    const handleIncomeRowModesModelChange = newRowModesModel => {
+        setIncomeRowModesModel(newRowModesModel)
+    }
+
+    // 支出用カラム
+    const expenseColumns = [
         {
             field: 'id',
             headerName: 'ID',
@@ -207,9 +325,10 @@ export default function FullFeaturedCrudGrid() {
             headerName: 'Actions',
             width: 100,
             cellClassName: 'actions',
-            getActions: ({ id }) => {
+            getActions: row => {
+                const { id, type } = row.row
                 const isInEditMode =
-                    rowModesModel[id]?.mode === GridRowModes.Edit
+                    expenseRowModesModel[id]?.mode === GridRowModes.Edit
 
                 if (isInEditMode) {
                     return [
@@ -219,13 +338,13 @@ export default function FullFeaturedCrudGrid() {
                             sx={{
                                 color: 'primary.main',
                             }}
-                            onClick={handleSaveClick(id)}
+                            onClick={handleSaveClick(id, type)}
                         />,
                         <GridActionsCellItem
                             icon={<CancelIcon />}
                             label="Cancel"
                             className="textPrimary"
-                            onClick={handleCancelClick(id)}
+                            onClick={handleCancelClick(id, type)}
                             color="inherit"
                         />,
                     ]
@@ -236,13 +355,77 @@ export default function FullFeaturedCrudGrid() {
                         icon={<EditIcon />}
                         label="Edit"
                         className="textPrimary"
-                        onClick={handleEditClick(id)}
+                        onClick={handleEditClick(id, type)}
                         color="inherit"
                     />,
                     <GridActionsCellItem
                         icon={<DeleteIcon />}
                         label="Delete"
-                        onClick={handleDeleteClick(id)}
+                        onClick={handleDeleteClick(id, type)}
+                        color="inherit"
+                    />,
+                ]
+            },
+        },
+    ]
+
+    // 収入用カラム
+    const incomeColumns = [
+        {
+            field: 'id',
+            headerName: 'ID',
+            width: 80,
+            editable: false,
+        },
+        {
+            field: 'name',
+            headerName: 'カテゴリー名',
+            width: 180,
+            editable: true,
+        },
+        {
+            field: 'actions',
+            type: 'actions',
+            headerName: 'Actions',
+            width: 100,
+            cellClassName: 'actions',
+            getActions: row => {
+                const { id, type } = row.row
+                const isInEditMode =
+                    incomeRowModesModel[id]?.mode === GridRowModes.Edit
+
+                if (isInEditMode) {
+                    return [
+                        <GridActionsCellItem
+                            icon={<SaveIcon />}
+                            label="Save"
+                            sx={{
+                                color: 'primary.main',
+                            }}
+                            onClick={handleSaveClick(id, type)}
+                        />,
+                        <GridActionsCellItem
+                            icon={<CancelIcon />}
+                            label="Cancel"
+                            className="textPrimary"
+                            onClick={handleCancelClick(id, type)}
+                            color="inherit"
+                        />,
+                    ]
+                }
+
+                return [
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        className="textPrimary"
+                        onClick={handleEditClick(id, type)}
+                        color="inherit"
+                    />,
+                    <GridActionsCellItem
+                        icon={<DeleteIcon />}
+                        label="Delete"
+                        onClick={handleDeleteClick(id, type)}
                         color="inherit"
                     />,
                 ]
@@ -251,31 +434,75 @@ export default function FullFeaturedCrudGrid() {
     ]
 
     return (
-        <Box
-            sx={{
-                width: '100%',
-                '& .actions': {
-                    color: 'text.secondary',
-                },
-                '& .textPrimary': {
-                    color: 'text.primary',
-                },
-            }}>
-            <DataGrid
-                rows={expenseRows}
-                columns={columns}
-                editMode="row"
-                rowModesModel={rowModesModel}
-                onRowModesModelChange={handleRowModesModelChange}
-                onRowEditStop={handleRowEditStop}
-                processRowUpdate={processRowUpdate}
-                slots={{
-                    toolbar: EditToolbar,
-                }}
-                slotProps={{
-                    toolbar: { setExpenseRows, setRowModesModel, expenseRows },
-                }}
-            />
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            {/* 支出カテゴリー一覧 */}
+            <Box sx={{ width: '50%' }}>
+                <Typography variant="h6">支出カテゴリー</Typography>
+                <Box
+                    sx={{
+                        width: '100%',
+                        '& .actions': {
+                            color: 'text.secondary',
+                        },
+                        '& .textPrimary': {
+                            color: 'text.primary',
+                        },
+                    }}>
+                    <DataGrid
+                        rows={expenseRows}
+                        columns={expenseColumns}
+                        editMode="row"
+                        rowModesModel={expenseRowModesModel}
+                        onRowModesModelChange={handleExpenseRowModesModelChange}
+                        onRowEditStop={handleRowEditStop}
+                        processRowUpdate={processRowUpdate}
+                        slots={{
+                            toolbar: EditExpenseToolbar,
+                        }}
+                        slotProps={{
+                            toolbar: {
+                                setExpenseRows,
+                                setExpenseRowModesModel,
+                                expenseRows,
+                            },
+                        }}
+                    />
+                </Box>
+            </Box>
+            {/* 収入カテゴリー一覧 */}
+            <Box sx={{ width: '50%' }}>
+                <Typography variant="h6">収入カテゴリー</Typography>
+                <Box
+                    sx={{
+                        width: '100%',
+                        '& .actions': {
+                            color: 'text.secondary',
+                        },
+                        '& .textPrimary': {
+                            color: 'text.primary',
+                        },
+                    }}>
+                    <DataGrid
+                        rows={incomeRows}
+                        columns={incomeColumns}
+                        editMode="row"
+                        rowModesModel={incomeRowModesModel}
+                        onRowModesModelChange={handleIncomeRowModesModelChange}
+                        onRowEditStop={handleRowEditStop}
+                        processRowUpdate={processRowUpdate}
+                        slots={{
+                            toolbar: EditIncomeToolbar,
+                        }}
+                        slotProps={{
+                            toolbar: {
+                                setIncomeRows,
+                                setIncomeRowModesModel,
+                                incomeRows,
+                            },
+                        }}
+                    />
+                </Box>
+            </Box>
         </Box>
     )
 }
