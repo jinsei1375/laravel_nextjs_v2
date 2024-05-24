@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
@@ -62,5 +63,11 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction)
     {
         //
+    }
+
+    public function getTransactions(Request $request, User $user)
+    {
+        $transactions = Transaction::with('category')->where('user_id', $user->id)->get();
+        return $transactions;
     }
 }

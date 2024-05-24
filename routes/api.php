@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -16,3 +17,5 @@ Route::get('/{user}/category/incomeexpense', [CategoryController::class, 'getInc
 Route::post('/{user}/category', [CategoryController::class, 'store']);
 Route::put('/{user}/category/{category}', [CategoryController::class, 'edit']);
 Route::delete('/{user}/category/{category}', [CategoryController::class, 'destroy']);
+
+Route::get('/{user}/transaction', [TransactionController::class, 'getTransactions']);
