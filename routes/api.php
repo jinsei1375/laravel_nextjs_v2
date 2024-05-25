@@ -19,3 +19,5 @@ Route::put('/{user}/category/{category}', [CategoryController::class, 'edit']);
 Route::delete('/{user}/category/{category}', [CategoryController::class, 'destroy']);
 
 Route::get('/{user}/transaction', [TransactionController::class, 'getTransactions']);
+Route::post('/{user}/transaction', [TransactionController::class, 'store']);
+Route::put('/{user}/transaction/{transaction}', [TransactionController::class, 'edit']);

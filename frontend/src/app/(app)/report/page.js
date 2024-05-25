@@ -17,20 +17,32 @@ import { useEffect, useState } from 'react'
 import axios from '@/lib/axios'
 import { useAuth } from '@/hooks/auth'
 import { Typography } from '@mui/material'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 function EditExpenseToolbar(props) {
     const { setRows, setRowModesModel, rows } = props
 
     const handleClick = () => {
-        const id = Math.max(...rows.map(row => row.id), 0) + 1
-        setRows(oldRows => [
-            ...oldRows,
-            { id, name: '', isNew: true, type: 'expense' },
-        ])
-        setRowModesModel(oldModel => ({
-            ...oldModel,
-            [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
-        }))
+        // const id = Math.max(...rows.map(row => row.id), 0) + 1
+        // setRows(oldRows => [
+        //     ...oldRows,
+        //     {
+        //         id,
+        //         title: '',
+        //         category: '',
+        //         amount: 0,
+        //         date: '',
+        //         isNew: true,
+        //         type: 'expense',
+        //     },
+        // ])
+        // setRowModesModel(oldModel => ({
+        //     ...oldModel,
+        //     [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+        // }))
+        setOpen(open)
     }
 
     return (
@@ -39,7 +51,7 @@ function EditExpenseToolbar(props) {
                 color="primary"
                 startIcon={<AddIcon />}
                 onClick={handleClick}>
-                カテゴリー追加
+                追加
             </Button>
         </GridToolbarContainer>
     )
@@ -47,15 +59,33 @@ function EditExpenseToolbar(props) {
 
 export default function Report() {
     const [transactions, setTransactions] = useState([])
+    const [open, setOpen] = userState([])
     const [rows, setRows] = useState([])
+    const [expenseCategories, setExpenseCategories] = useState([])
+    const [incomeCategories, setIncomeCategories] = useState([])
     const [rowModesModel, setRowModesModel] = useState({})
 
     const { user } = useAuth({ middleware: 'auth' })
     const userId = user.id
 
+    const transactionSchema = z.object({
+        type: z.string().nonempty({ message: 'Type is required' }),
+        category: z.string().nonempty({ message: 'Category is required' }),
+        amount: z.number().min(1, 'Amount must be greater than 0'),
+        title: z.string().nonempty({ message: 'Title is required' }),
+    })
+
+    const formOptions = { resolver: zodResolver(transactionSchema) }
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm(formOptions)
+
     useEffect(() => {
         if (user) {
             fetchTransactions()
+            fetchCategories()
         }
     }, [user])
 
@@ -82,61 +112,51 @@ export default function Report() {
         }
     }
 
-    const handleEditClick = (id, type) => () => {
-        console.log('handleEditClick called with id:', id, 'and type:', type)
-        if (type === 'expense') {
-            setRowModesModel({
-                ...rowModesModel,
-                [id]: { mode: GridRowModes.Edit },
-            })
-            console.log('rowModesModel after update:', rowModesModel)
-        } else if (type === 'income') {
-            setIncomeRowModesModel({
-                ...incomeRowModesModel,
-                [id]: { mode: GridRowModes.Edit },
-            })
-            console.log(
-                'incomeRowModesModel after update:',
-                incomeRowModesModel,
+    const handleEditClick = id => () => {
+        setRowModesModel({
+            ...rowModesModel,
+            [id]: { mode: GridRowModes.Edit },
+        })
+        console.log('rowModesModel after update:', rowModesModel)
+    }
+
+    const handleSaveClick = id => () => {
+        setRowModesModel({
+            ...rowModesModel,
+            [id]: { mode: GridRowModes.View },
+        })
+    }
+
+    const handleCancelClick = id => () => {
+        setRowModesModel({
+            ...rowModesModel,
+            [id]: { mode: GridRowModes.View, ignoreModifications: true },
+        })
+
+        const editedRow = rows.find(row => row.id === id)
+        if (editedRow.isNew) {
+            setRows(rows.filter(row => row.id !== id))
+        }
+    }
+
+    // カテゴリー取得処理
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get(
+                `http://localhost/api/${userId}/category/`,
             )
-        }
-    }
+            const fetchedCategories = response.data
 
-    const handleSaveClick = (id, type) => () => {
-        if (type === 'expense') {
-            setRowModesModel({
-                ...rowModesModel,
-                [id]: { mode: GridRowModes.View },
-            })
-        } else if (type === 'income') {
-            setIncomeRowModesModel({
-                ...incomeRowModesModel,
-                [id]: { mode: GridRowModes.View },
-            })
-        }
-    }
-
-    const handleCancelClick = (id, type) => () => {
-        if (type === 'expense') {
-            setRowModesModel({
-                ...rowModesModel,
-                [id]: { mode: GridRowModes.View, ignoreModifications: true },
-            })
-
-            const editedRow = rows.find(row => row.id === id)
-            if (editedRow.isNew) {
-                setRows(rows.filter(row => row.id !== id))
-            }
-        } else if (type === 'income') {
-            setIncomeRowModesModel({
-                ...incomeRowModesModel,
-                [id]: { mode: GridRowModes.View, ignoreModifications: true },
-            })
-
-            const editedRow = incomeRows.find(row => row.id === id)
-            if (editedRow.isNew) {
-                setIncomeRows(incomeRows.filter(row => row.id !== id))
-            }
+            const filteredExpenseCategories = fetchedCategories.filter(
+                cat => cat.type === 'expense',
+            )
+            const filteredIncomeCategories = fetchedCategories.filter(
+                cat => cat.type === 'income',
+            )
+            setExpenseCategories(filteredExpenseCategories)
+            setIncomeCategories(filteredIncomeCategories)
+        } catch (err) {
+            console.log(err)
         }
     }
 
@@ -159,16 +179,12 @@ export default function Report() {
         if (newRow.isNew) {
             try {
                 const response = await axios.post(
-                    `http://localhost/api/${userId}/category`,
-                    { name: newRow.name, type: newRow.type },
+                    `http://localhost/api/${userId}/transaction`,
+                    { transaction: newRow },
                 )
 
                 if (response.status === 200) {
-                    if (newRow.type === 'expense') {
-                        setRows(oldRows => [...oldRows, response.data])
-                    } else if (newRow.type === 'income') {
-                        setIncomeRows(oldRows => [...oldRows, response.data])
-                    }
+                    setRows(oldRows => [...oldRows, response.data])
                 } else {
                     console.log('Error occurred while adding category')
                 }
@@ -178,23 +194,15 @@ export default function Report() {
         } else {
             try {
                 const response = await axios.put(
-                    `http://localhost/api/${userId}/category/${newRow.categoryId}`,
-                    { name: newRow.name },
+                    `http://localhost/api/${userId}/transaction/${newRow}`,
+                    { transaction: newRow },
                 )
                 if (response.status === 200) {
-                    if (newRow.type === 'expense') {
-                        setRows(oldRows =>
-                            oldRows.map(row =>
-                                row.id === newRow.id ? response.data : row,
-                            ),
-                        )
-                    } else if (newRow.type === 'income') {
-                        setIncomeRows(oldRows =>
-                            oldRows.map(row =>
-                                row.id === newRow.id ? response.data : row,
-                            ),
-                        )
-                    }
+                    setRows(oldRows =>
+                        oldRows.map(row =>
+                            row.id === newRow.id ? response.data : row,
+                        ),
+                    )
                 } else {
                     console.log('Error occurred while adding category')
                 }
@@ -204,37 +212,19 @@ export default function Report() {
         }
         console.log(newRow)
         const updatedRow = { ...newRow, isNew: false }
-        if (newRow.type === 'expense') {
-            setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)))
-        } else if (newRow.type === 'income') {
-            setIncomeRows(
-                incomeRows.map(row =>
-                    row.id === newRow.id ? updatedRow : row,
-                ),
-            )
-        }
+        setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)))
         return updatedRow
     }
 
     // カテゴリー削除処理
-    const handleDeleteClick = (id, type) => async () => {
-        let targetRow = {}
-        if (type === 'expense') {
-            targetRow = rows.find(row => row.id === id)
-        } else if (type === 'income') {
-            targetRow = incomeRows.find(row => row.id === id)
-        }
+    const handleDeleteClick = id => async () => {
+        const targetRow = rows.find(row => row.id === id)
         try {
             const response = await axios.delete(
                 `http://localhost/api/${userId}/category/${targetRow.categoryId}`,
             )
             if (response.status === 200) {
-                if (type === 'expense') {
-                    setRows(rows.filter(row => row.id !== id))
-                } else if (type === 'income') {
-                    setIncomeRows(incomeRows.filter(row => row.id !== id))
-                }
-                console.log(response.data.message)
+                setRows(rows.filter(row => row.id !== id))
             } else {
                 console.log('Error occurred while adding category')
             }
@@ -243,7 +233,7 @@ export default function Report() {
         }
     }
 
-    const handleExpenseRowModesModelChange = newRowModesModel => {
+    const rowModesModelChange = newRowModesModel => {
         setRowModesModel(newRowModesModel)
     }
 
@@ -262,15 +252,15 @@ export default function Report() {
             editable: true,
         },
         {
-            field: 'category',
-            headerName: 'カテゴリー名',
-            width: 180,
-            editable: true,
-        },
-        {
             field: 'type',
             headerName: 'タイプ',
             width: 120,
+            editable: true,
+        },
+        {
+            field: 'category',
+            headerName: 'カテゴリー名',
+            width: 180,
             editable: true,
         },
         {
@@ -354,7 +344,7 @@ export default function Report() {
                         columns={expenseColumns}
                         editMode="row"
                         rowModesModel={rowModesModel}
-                        onRowModesModelChange={handleExpenseRowModesModelChange}
+                        onRowModesModelChange={rowModesModelChange}
                         onRowEditStop={handleRowEditStop}
                         processRowUpdate={processRowUpdate}
                         slots={{
@@ -370,6 +360,27 @@ export default function Report() {
                     />
                 </Box>
             </Box>
+            <Dialog open={open} onClose={handleClose}>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <TextField
+                        {...register('type')}
+                        error={Boolean(errors.type)}
+                        helperText={errors.type?.message}
+                    />
+                    <TextField
+                        {...register('category')}
+                        error={Boolean(errors.category)}
+                        helperText={errors.category?.message}
+                    />
+                    <TextField
+                        {...register('amount')}
+                        error={Boolean(errors.amount)}
+                        helperText={errors.amount?.message}
+                    />
+                    {/* 他のフィールドもここに追加します */}
+                    <Button type="submit">Submit</Button>
+                </form>
+            </Dialog>
         </Box>
     )
 }
