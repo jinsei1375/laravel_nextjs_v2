@@ -40,6 +40,11 @@ const Navigation = ({ user }) => {
                                 active={usePathname() === '/category'}>
                                 Category
                             </NavLink>
+                            <NavLink
+                                href="/report"
+                                active={usePathname() === '/report'}>
+                                Report
+                            </NavLink>
                         </div>
                     </div>
 
@@ -119,6 +124,11 @@ const Navigation = ({ user }) => {
                             href="/category"
                             active={usePathname() === '/category'}>
                             Category
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href="/report"
+                            active={usePathname() === '/report'}>
+                            Report
                         </ResponsiveNavLink>
                     </div>
 
