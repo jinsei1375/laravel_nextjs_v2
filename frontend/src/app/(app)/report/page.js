@@ -16,32 +16,27 @@ import {
 import { useEffect, useState } from 'react'
 import axios from '@/lib/axios'
 import { useAuth } from '@/hooks/auth'
-import { Typography } from '@mui/material'
+import {
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+    Stack,
+    TextField,
+    Typography,
+} from '@mui/material'
 import { z } from 'zod'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 function EditExpenseToolbar(props) {
-    const { setRows, setRowModesModel, rows } = props
+    const { setOpen } = props
 
     const handleClick = () => {
-        // const id = Math.max(...rows.map(row => row.id), 0) + 1
-        // setRows(oldRows => [
-        //     ...oldRows,
-        //     {
-        //         id,
-        //         title: '',
-        //         category: '',
-        //         amount: 0,
-        //         date: '',
-        //         isNew: true,
-        //         type: 'expense',
-        //     },
-        // ])
-        // setRowModesModel(oldModel => ({
-        //     ...oldModel,
-        //     [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
-        // }))
         setOpen(open)
     }
 
@@ -59,7 +54,7 @@ function EditExpenseToolbar(props) {
 
 export default function Report() {
     const [transactions, setTransactions] = useState([])
-    const [open, setOpen] = userState([])
+    const [open, setOpen] = useState(true)
     const [rows, setRows] = useState([])
     const [expenseCategories, setExpenseCategories] = useState([])
     const [incomeCategories, setIncomeCategories] = useState([])
@@ -69,18 +64,51 @@ export default function Report() {
     const userId = user.id
 
     const transactionSchema = z.object({
-        type: z.string().nonempty({ message: 'Type is required' }),
-        category: z.string().nonempty({ message: 'Category is required' }),
-        amount: z.number().min(1, 'Amount must be greater than 0'),
-        title: z.string().nonempty({ message: 'Title is required' }),
+        // type: z.enum(['income', 'expense']),
+        // date: z.string().min(1, { message: '日付は必須です' }),
+        // amount: z.number().min(1, { message: '金額は1円以上必須です' }),
+        // title: z
+        //     .string()
+        //     .min(1, { message: '内容を入力してください' })
+        //     .max(50, { message: '内容は50文字以内にしてください。' }),
     })
+
+    const onSubmit = async data => {
+        console.log(data)
+        try {
+            // const response = await axios.post(
+            //     `http://localhost/api/${userId}/transaction`,
+            //     { transaction: data },
+            // )
+            // const newTransaction = response.data
+            // if (response.ok) {
+            //     // Handle successful submission
+            // } else {
+            //     // Handle error
+            // }
+        } catch (error) {
+            // Handle error
+            console.error(error)
+        }
+    }
 
     const formOptions = { resolver: zodResolver(transactionSchema) }
     const {
-        register,
-        handleSubmit,
+        control,
+        // setValue,
+        // watch,
         formState: { errors },
-    } = useForm(formOptions)
+        // reset,
+        handleSubmit,
+    } = useForm({
+        resolver: zodResolver(transactionSchema),
+        defaultValues: {
+            type: 'expense',
+            date: '2021-09-01',
+            amount: 1000,
+            title: 'test',
+        },
+    })
 
     useEffect(() => {
         if (user) {
@@ -105,6 +133,10 @@ export default function Report() {
         // console.log(newRows)
         setRows(newRows)
     }, [transactions])
+
+    const handleClose = () => {
+        setOpen(false)
+    }
 
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
@@ -352,34 +384,144 @@ export default function Report() {
                         }}
                         slotProps={{
                             toolbar: {
-                                setRows,
-                                setRowModesModel,
-                                rows,
+                                setOpen,
                             },
                         }}
                     />
                 </Box>
             </Box>
-            <Dialog open={open} onClose={handleClose}>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <TextField
-                        {...register('type')}
-                        error={Boolean(errors.type)}
-                        helperText={errors.type?.message}
-                    />
-                    <TextField
-                        {...register('category')}
-                        error={Boolean(errors.category)}
-                        helperText={errors.category?.message}
-                    />
-                    <TextField
-                        {...register('amount')}
-                        error={Boolean(errors.amount)}
-                        helperText={errors.amount?.message}
-                    />
-                    {/* 他のフィールドもここに追加します */}
-                    <Button type="submit">Submit</Button>
-                </form>
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                sx={
+                    {
+                        // width: '50%',
+                        // height: '300px',
+                        // display: 'flex',
+                        // justifyContent: 'center',
+                        // alignItems: 'center',
+                    }
+                }>
+                <DialogTitle>取引追加</DialogTitle>
+                <DialogContent>
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                        <Stack spacing={2}>
+                            {/* 収支タイプ */}
+                            <Controller
+                                name="type"
+                                control={control}
+                                defaultValue=""
+                                rules={{ required: 'This field is required' }}
+                                render={({ field }) => (
+                                    <FormControl error={Boolean(errors.type)}>
+                                        <InputLabel>Type</InputLabel>
+                                        <Select {...field}>
+                                            <MenuItem value="income">
+                                                Income
+                                            </MenuItem>
+                                            <MenuItem value="expense">
+                                                Expense
+                                            </MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                )}
+                            />
+                            {/* カテゴリー */}
+                            <Controller
+                                name="category"
+                                control={control}
+                                defaultValue=""
+                                rules={{ required: 'This field is required' }}
+                                render={({ field }) => (
+                                    <FormControl
+                                        error={Boolean(errors.category)}>
+                                        <InputLabel>Category</InputLabel>
+                                        <Select {...field}>
+                                            {field.value === 'income'
+                                                ? incomeCategories.map(
+                                                      category => (
+                                                          <MenuItem
+                                                              key={category.id}
+                                                              value={
+                                                                  category.id
+                                                              }>
+                                                              {category.name}
+                                                          </MenuItem>
+                                                      ),
+                                                  )
+                                                : expenseCategories.map(
+                                                      category => (
+                                                          <MenuItem
+                                                              key={category.id}
+                                                              value={
+                                                                  category.id
+                                                              }>
+                                                              {category.name}
+                                                          </MenuItem>
+                                                      ),
+                                                  )}
+                                        </Select>
+                                    </FormControl>
+                                )}
+                            />
+                            {/* タイトル */}
+                            <Controller
+                                name="title"
+                                control={control}
+                                defaultValue=""
+                                // rules={{ required: 'This field is required' }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Title"
+                                        type="text"
+                                        error={Boolean(errors.amount)}
+                                        helperText={errors.title?.message}
+                                    />
+                                )}
+                            />
+                            {/* 金額 */}
+                            <Controller
+                                name="amount"
+                                control={control}
+                                defaultValue=""
+                                // rules={{ required: 'This field is required' }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Amount"
+                                        type="number"
+                                        error={Boolean(errors.amount)}
+                                        helperText={errors.amount?.message}
+                                    />
+                                )}
+                            />
+                            {/* 日付 */}
+                            <Controller
+                                name="date"
+                                control={control}
+                                defaultValue=""
+                                rules={{ required: 'This field is required' }}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        type="date"
+                                        label="Date"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        error={Boolean(errors.date)}
+                                        helperText={errors.date?.message}
+                                    />
+                                )}
+                            />
+                        </Stack>
+
+                        <DialogActions>
+                            <Button type="submit">追加</Button>
+                        </DialogActions>
+                    </ふぉr>
+                </DialogContent>
             </Dialog>
         </Box>
     )
