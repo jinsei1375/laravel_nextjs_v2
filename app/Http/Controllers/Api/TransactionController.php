@@ -30,7 +30,7 @@ class TransactionController extends Controller
      */
     public function store(Request $request, User $user)
     {
-        dd($request->transaction);
+        dd($request->all());
         $transaction = new Transaction;
         $transaction->user_id = $user->id;
         $transaction->title = $request->title;

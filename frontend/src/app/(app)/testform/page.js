@@ -1,23 +1,30 @@
-import { Controller, useForm } from 'react-hook-form'
+import React from 'react'
+import { useForm } from 'react-hook-form'
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 export default function TestForm() {
-    // useFormのインスタンスを作成
-    const { handleSubmit, control } = useForm()
-
-    // フォームの送信時に呼び出される関数
-    const onSubmit = data => console.log(data)
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        formState,
+    } = useForm()
+    const onSubmit = async data => {
+        await sleep(2000)
+        if (data.username === 'bill') {
+            alert(JSON.stringify(data))
+        } else {
+            alert('There is an error')
+        }
+    }
 
     return (
-        <>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <Controller
-                    name="fieldName" // ここが重要です。これがdataオブジェクトのキーとなります。
-                    control={control}
-                    defaultValue=""
-                    render={({ field }) => <input {...field} />}
-                />
-                <input type="submit" />
-            </form>
-        </>
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <label htmlFor="username">User Name</label>
+            <input placeholder="Bill" {...register('username')} />
+
+            <input type="submit" />
+        </form>
     )
 }

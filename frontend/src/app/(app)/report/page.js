@@ -14,7 +14,7 @@ import {
     GridRowEditStopReasons,
 } from '@mui/x-data-grid'
 import { useEffect, useState } from 'react'
-import axios from '@/lib/axios'
+
 import { useAuth } from '@/hooks/auth'
 import {
     Dialog,
@@ -27,11 +27,11 @@ import {
     Select,
     Stack,
     TextField,
-    Typography,
 } from '@mui/material'
 import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import axios from '@/lib/axios'
 
 function EditExpenseToolbar(props) {
     const { setOpen } = props
@@ -76,16 +76,16 @@ export default function Report() {
     const onSubmit = async data => {
         console.log(data)
         try {
-            // const response = await axios.post(
-            //     `http://localhost/api/${userId}/transaction`,
-            //     { transaction: data },
-            // )
-            // const newTransaction = response.data
-            // if (response.ok) {
-            //     // Handle successful submission
-            // } else {
-            //     // Handle error
-            // }
+            const response = await axios.post(
+                `http://localhost/api/${userId}/transaction`,
+                { transaction: data },
+            )
+            const newTransaction = response.data
+            if (response.status === 200) {
+                console.log(newTransaction)
+            } else {
+                console.log('Error occurred while adding transaction')
+            }
         } catch (error) {
             // Handle error
             console.error(error)
@@ -101,12 +101,14 @@ export default function Report() {
         // reset,
         handleSubmit,
     } = useForm({
-        resolver: zodResolver(transactionSchema),
+        // todo resolverを使うとエラーが出る
+        // resolver: zodResolver(transactionSchema),
         defaultValues: {
             type: 'expense',
             date: '2021-09-01',
             amount: 1000,
             title: 'test',
+            category: '',
         },
     })
 
@@ -404,18 +406,24 @@ export default function Report() {
                 }>
                 <DialogTitle>取引追加</DialogTitle>
                 <DialogContent>
-                    <form onSubmit={handleSubmit(onSubmit)}>
+                    <Box component={'form'} onSubmit={handleSubmit(onSubmit)}>
                         <Stack spacing={2}>
                             {/* 収支タイプ */}
                             <Controller
+                                mt={2}
                                 name="type"
                                 control={control}
-                                defaultValue=""
-                                rules={{ required: 'This field is required' }}
+                                // defaultValue=""
+                                // rules={{ required: 'This field is required' }}
                                 render={({ field }) => (
-                                    <FormControl error={Boolean(errors.type)}>
-                                        <InputLabel>Type</InputLabel>
-                                        <Select {...field}>
+                                    <FormControl error={!!errors.type}>
+                                        <InputLabel id="type-select-label">
+                                            Type
+                                        </InputLabel>
+                                        <Select
+                                            {...field}
+                                            label="タイプ"
+                                            labelId="type-select-label">
                                             <MenuItem value="income">
                                                 Income
                                             </MenuItem>
@@ -430,36 +438,24 @@ export default function Report() {
                             <Controller
                                 name="category"
                                 control={control}
-                                defaultValue=""
-                                rules={{ required: 'This field is required' }}
+                                // defaultValue=""
+                                // rules={{ required: 'This field is required' }}
                                 render={({ field }) => (
-                                    <FormControl
-                                        error={Boolean(errors.category)}>
-                                        <InputLabel>Category</InputLabel>
-                                        <Select {...field}>
-                                            {field.value === 'income'
-                                                ? incomeCategories.map(
-                                                      category => (
-                                                          <MenuItem
-                                                              key={category.id}
-                                                              value={
-                                                                  category.id
-                                                              }>
-                                                              {category.name}
-                                                          </MenuItem>
-                                                      ),
-                                                  )
-                                                : expenseCategories.map(
-                                                      category => (
-                                                          <MenuItem
-                                                              key={category.id}
-                                                              value={
-                                                                  category.id
-                                                              }>
-                                                              {category.name}
-                                                          </MenuItem>
-                                                      ),
-                                                  )}
+                                    <FormControl error={!!errors.category}>
+                                        <InputLabel id="category-select-label">
+                                            Category
+                                        </InputLabel>
+                                        <Select
+                                            {...field}
+                                            label="カテゴリ"
+                                            labelId="category-select-label">
+                                            {expenseCategories.map(category => (
+                                                <MenuItem
+                                                    key={category.id}
+                                                    value={category.id}>
+                                                    {category.name}
+                                                </MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
                                 )}
@@ -468,14 +464,14 @@ export default function Report() {
                             <Controller
                                 name="title"
                                 control={control}
-                                defaultValue=""
+                                // defaultValue=""
                                 // rules={{ required: 'This field is required' }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         label="Title"
                                         type="text"
-                                        error={Boolean(errors.amount)}
+                                        error={!!errors.amount}
                                         helperText={errors.title?.message}
                                     />
                                 )}
@@ -484,14 +480,15 @@ export default function Report() {
                             <Controller
                                 name="amount"
                                 control={control}
-                                defaultValue=""
+                                // defaultValue=""
                                 // rules={{ required: 'This field is required' }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
                                         label="Amount"
                                         type="number"
-                                        error={Boolean(errors.amount)}
+                                        value={field.value}
+                                        error={!!errors.amount}
                                         helperText={errors.amount?.message}
                                     />
                                 )}
@@ -500,8 +497,8 @@ export default function Report() {
                             <Controller
                                 name="date"
                                 control={control}
-                                defaultValue=""
-                                rules={{ required: 'This field is required' }}
+                                // defaultValue=""
+                                // rules={{ required: 'This field is required' }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
@@ -510,7 +507,7 @@ export default function Report() {
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
-                                        error={Boolean(errors.date)}
+                                        error={!!errors.date}
                                         helperText={errors.date?.message}
                                     />
                                 )}
@@ -520,7 +517,7 @@ export default function Report() {
                         <DialogActions>
                             <Button type="submit">追加</Button>
                         </DialogActions>
-                    </ふぉr>
+                    </Box>
                 </DialogContent>
             </Dialog>
         </Box>
