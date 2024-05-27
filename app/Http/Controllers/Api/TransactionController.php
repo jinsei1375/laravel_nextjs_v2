@@ -30,12 +30,12 @@ class TransactionController extends Controller
      */
     public function store(Request $request, User $user)
     {
-        dd($request->all());
         $transaction = new Transaction;
         $transaction->user_id = $user->id;
         $transaction->title = $request->title;
-        $transaction->category_id = $request->type;
-        $transaction->type = $request->type;
+        $transaction->category_id = $request->category;
+        $transaction->amount = $request->amount;
+        $transaction->date = $request->date;
         $transaction->save();
 
         return response()->json($transaction);
@@ -75,7 +75,7 @@ class TransactionController extends Controller
 
     public function getTransactions(Request $request, User $user)
     {
-        $transactions = Transaction::with('category')->where('user_id', $user->id)->get();
+        $transactions = Transaction::with('category')->where('user_id', $user->id)->orderBy('date', 'asc')->get();
         return $transactions;
     }
 }

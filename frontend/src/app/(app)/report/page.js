@@ -37,7 +37,7 @@ function EditExpenseToolbar(props) {
     const { setOpen } = props
 
     const handleClick = () => {
-        setOpen(open)
+        setOpen(true)
     }
 
     return (
@@ -54,7 +54,7 @@ function EditExpenseToolbar(props) {
 
 export default function Report() {
     const [transactions, setTransactions] = useState([])
-    const [open, setOpen] = useState(true)
+    const [open, setOpen] = useState(false)
     const [rows, setRows] = useState([])
     const [expenseCategories, setExpenseCategories] = useState([])
     const [incomeCategories, setIncomeCategories] = useState([])
@@ -78,9 +78,16 @@ export default function Report() {
         try {
             const response = await axios.post(
                 `http://localhost/api/${userId}/transaction`,
-                { transaction: data },
+                {
+                    date: data.date,
+                    amount: data.amount,
+                    title: data.title,
+                    category: data.category,
+                },
             )
             const newTransaction = response.data
+            setTransactions([...transactions, newTransaction])
+            setOpen(false)
             if (response.status === 200) {
                 console.log(newTransaction)
             } else {
