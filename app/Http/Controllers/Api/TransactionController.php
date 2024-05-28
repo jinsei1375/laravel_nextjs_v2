@@ -68,9 +68,14 @@ class TransactionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Transaction $transaction)
+    public function destroy(Request $request, User $user, Transaction $transaction)
     {
-        //
+        \Log::info($transaction);
+        $transaction->delete();
+
+        return response()->json([
+            'message' => 'Transaction deleted successfully'
+        ]);
     }
 
     public function getTransactions(Request $request, User $user)

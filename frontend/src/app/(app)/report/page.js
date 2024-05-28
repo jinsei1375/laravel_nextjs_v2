@@ -100,6 +100,7 @@ export default function Report() {
     }
 
     const formOptions = { resolver: zodResolver(transactionSchema) }
+
     const {
         control,
         // setValue,
@@ -141,6 +142,7 @@ export default function Report() {
         })
         // console.log(newRows)
         setRows(newRows)
+        console.log(transactions)
     }, [transactions])
 
     const handleClose = () => {
@@ -214,7 +216,7 @@ export default function Report() {
         }
     }
 
-    // カテゴリー編集・追加処理
+    // 編集・追加処理
     const processRowUpdate = async newRow => {
         console.log(newRow)
         if (newRow.isNew) {
@@ -257,15 +259,17 @@ export default function Report() {
         return updatedRow
     }
 
-    // カテゴリー削除処理
+    // 削除処理
     const handleDeleteClick = id => async () => {
-        const targetRow = rows.find(row => row.id === id)
+        const targetTransaction = rows.find(row => row.id === id)
+        console.log(targetTransaction.id)
         try {
             const response = await axios.delete(
-                `http://localhost/api/${userId}/category/${targetRow.categoryId}`,
+                `http://localhost/api/${userId}/transaction/${targetTransaction.id}`,
             )
             if (response.status === 200) {
                 setRows(rows.filter(row => row.id !== id))
+                console.log(response.data.message)
             } else {
                 console.log('Error occurred while adding category')
             }
@@ -335,13 +339,13 @@ export default function Report() {
                             sx={{
                                 color: 'primary.main',
                             }}
-                            onClick={handleSaveClick(id, type)}
+                            onClick={handleSaveClick(id)}
                         />,
                         <GridActionsCellItem
                             icon={<CancelIcon />}
                             label="Cancel"
                             className="textPrimary"
-                            onClick={handleCancelClick(id, type)}
+                            onClick={handleCancelClick(id)}
                             color="inherit"
                         />,
                     ]
@@ -352,13 +356,13 @@ export default function Report() {
                         icon={<EditIcon />}
                         label="Edit"
                         className="textPrimary"
-                        onClick={handleEditClick(id, type)}
+                        onClick={handleEditClick(id)}
                         color="inherit"
                     />,
                     <GridActionsCellItem
                         icon={<DeleteIcon />}
                         label="Delete"
-                        onClick={handleDeleteClick(id, type)}
+                        onClick={handleDeleteClick(id)}
                         color="inherit"
                     />,
                 ]
