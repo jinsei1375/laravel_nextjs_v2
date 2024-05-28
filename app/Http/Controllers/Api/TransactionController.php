@@ -54,9 +54,17 @@ class TransactionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Transaction $transaction)
+    public function edit(Request $request, User $user, Transaction $transaction)
     {
-        //
+        $transaction->fill([
+            'user_id' => $user->id,
+            'title' => $request->title,
+            'category_id' => $request->category,
+            'amount' => $request->amount,
+            'date' => $request->date,
+        ])->save();
+        $transaction->load('category');
+        return response()->json($transaction);
     }
 
     /**

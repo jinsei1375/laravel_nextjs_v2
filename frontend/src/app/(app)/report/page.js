@@ -4,8 +4,6 @@ import Button from '@mui/material/Button'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
-import SaveIcon from '@mui/icons-material/Save'
-import CancelIcon from '@mui/icons-material/Close'
 import {
     GridRowModes,
     DataGrid,
@@ -23,7 +21,6 @@ import {
     DialogTitle,
     FormControl,
     FormControlLabel,
-    FormLabel,
     InputLabel,
     MenuItem,
     Radio,
@@ -38,10 +35,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import axios from '@/lib/axios'
 
 function EditExpenseToolbar(props) {
-    const { setOpen } = props
+    const { setOpen, setIsNew, reset, currentDay } = props
 
     const handleClick = () => {
+        reset({
+            type: 'expense',
+            date: currentDay,
+            amount: 0,
+            category: '',
+            title: '',
+        })
         setOpen(true)
+        setIsNew(true)
     }
 
     return (
@@ -66,6 +71,7 @@ export default function Report() {
     const [expenseCategories, setExpenseCategories] = useState([])
     const [incomeCategories, setIncomeCategories] = useState([])
     const [rowModesModel, setRowModesModel] = useState({})
+    const [isNew, setIsNew] = useState(false)
 
     const { user } = useAuth({ middleware: 'auth' })
     const userId = user.id
@@ -84,23 +90,64 @@ export default function Report() {
     const onSubmit = async data => {
         console.log(data)
         try {
-            const response = await axios.post(
-                `http://localhost/api/${userId}/transaction`,
-                {
-                    date: data.date,
-                    amount: data.amount,
-                    title: data.title,
-                    category: data.category,
-                },
-            )
-            const newTransaction = response.data
-            setTransactions([...transactions, newTransaction])
-            setOpen(false)
-            if (response.status === 200) {
-                console.log(newTransaction)
+            if (isNew) {
+                const response = await axios.post(
+                    `http://localhost/api/${userId}/transaction`,
+                    {
+                        date: data.date,
+                        amount: data.amount,
+                        title: data.title,
+                        category: data.category,
+                    },
+                )
+                if (response.status === 200) {
+                    const newTransaction = response.data
+                    setTransactions([...transactions, newTransaction])
+                    console.log(newTransaction)
+                } else {
+                    console.log('Error occurred while adding transaction')
+                }
             } else {
-                console.log('Error occurred while adding transaction')
+                const response = await axios.put(
+                    `http://localhost/api/${userId}/transaction/${data.transactionId}`,
+                    {
+                        date: data.date,
+                        amount: data.amount,
+                        title: data.title,
+                        category: data.category,
+                    },
+                )
+                if (response.status === 200) {
+                    console.log(response.data)
+                    console.log(data.transactionId)
+                    console.log(data)
+                    const updatedRow = {
+                        id: data.id,
+                        title: response.data.title,
+                        category: response.data.category
+                            ? response.data.category.name
+                            : 'N/A',
+                        type:
+                            response.data.category.type == 'income'
+                                ? '収入'
+                                : '支出',
+                        amount: response.data.amount,
+                        date: response.data.date,
+                        transactionId: response.data.id,
+                        categoryId: response.data.category.id,
+                    }
+                    setRows(oldRows =>
+                        oldRows.map(row =>
+                            row.transactionId === data.transactionId
+                                ? updatedRow
+                                : row,
+                        ),
+                    )
+                } else {
+                    console.log('Error occurred while adding category')
+                }
             }
+            setOpen(false)
         } catch (error) {
             // Handle error
             console.error(error)
@@ -114,7 +161,7 @@ export default function Report() {
         setValue,
         watch,
         formState: { errors },
-        // reset,
+        reset,
         handleSubmit,
     } = useForm({
         // todo resolverを使うとエラーが出る
@@ -149,10 +196,11 @@ export default function Report() {
                 type: transaction.category.type == 'income' ? '収入' : '支出',
                 amount: transaction.amount,
                 date: transaction.date,
+                transactionId: transaction.id,
+                categoryId: transaction.category.id,
             }
         })
         setRows(newRows)
-        console.log(transactions)
     }, [transactions])
 
     useEffect(() => {
@@ -177,12 +225,18 @@ export default function Report() {
         }
     }
 
-    const handleEditClick = id => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.Edit },
-        })
-        console.log('rowModesModel after update:', rowModesModel)
+    // 編集処理
+    const handleEditClick = row => () => {
+        setOpen(true)
+        setIsNew(false)
+        console.log(row)
+        setValue('id', row.id)
+        setValue('title', row.title)
+        setValue('type', row.type == '収入' ? 'income' : 'expense')
+        setValue('category', row.categoryId)
+        setValue('amount', row.amount)
+        setValue('date', row.date)
+        setValue('transactionId', row.transactionId)
     }
 
     const handleSaveClick = id => () => {
@@ -284,11 +338,10 @@ export default function Report() {
 
     // 削除処理
     const handleDeleteClick = id => async () => {
-        const targetTransaction = rows.find(row => row.id === id)
-        console.log(targetTransaction.id)
+        console.log(id)
         try {
             const response = await axios.delete(
-                `http://localhost/api/${userId}/transaction/${targetTransaction.id}`,
+                `http://localhost/api/${userId}/transaction/${id}`,
             )
             if (response.status === 200) {
                 setRows(rows.filter(row => row.id !== id))
@@ -317,31 +370,31 @@ export default function Report() {
             field: 'title',
             headerName: '項目名',
             width: 180,
-            editable: true,
+            editable: false,
         },
         {
             field: 'type',
             headerName: 'タイプ',
             width: 120,
-            editable: true,
+            editable: false,
         },
         {
             field: 'category',
             headerName: 'カテゴリー名',
             width: 180,
-            editable: true,
+            editable: false,
         },
         {
             field: 'amount',
             headerName: '金額',
             width: 180,
-            editable: true,
+            editable: false,
         },
         {
             field: 'date',
             headerName: '日付',
             width: 180,
-            editable: true,
+            editable: false,
         },
         {
             field: 'actions',
@@ -350,42 +403,18 @@ export default function Report() {
             width: 100,
             cellClassName: 'actions',
             getActions: row => {
-                const { id, type } = row.row
-                const isInEditMode =
-                    rowModesModel[id]?.mode === GridRowModes.Edit
-
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<SaveIcon />}
-                            label="Save"
-                            sx={{
-                                color: 'primary.main',
-                            }}
-                            onClick={handleSaveClick(id)}
-                        />,
-                        <GridActionsCellItem
-                            icon={<CancelIcon />}
-                            label="Cancel"
-                            className="textPrimary"
-                            onClick={handleCancelClick(id)}
-                            color="inherit"
-                        />,
-                    ]
-                }
-
                 return [
                     <GridActionsCellItem
                         icon={<EditIcon />}
                         label="Edit"
                         className="textPrimary"
-                        onClick={handleEditClick(id)}
+                        onClick={handleEditClick(row.row)}
                         color="inherit"
                     />,
                     <GridActionsCellItem
                         icon={<DeleteIcon />}
                         label="Delete"
-                        onClick={handleDeleteClick(id)}
+                        onClick={handleDeleteClick(row.row.transactionId)}
                         color="inherit"
                     />,
                 ]
@@ -421,10 +450,9 @@ export default function Report() {
                         slotProps={{
                             toolbar: {
                                 setOpen,
-                                setCategories,
-                                expenseCategories,
-                                incomeCategories,
-                                currentType,
+                                setIsNew,
+                                reset,
+                                currentDay,
                             },
                         }}
                     />
@@ -562,7 +590,9 @@ export default function Report() {
                             />
                         </Stack>
                         <DialogActions>
-                            <Button type="submit">追加</Button>
+                            <Button type="submit">
+                                {isNew ? '追加' : '更新'}
+                            </Button>
                         </DialogActions>
                     </Box>
                 </DialogContent>
