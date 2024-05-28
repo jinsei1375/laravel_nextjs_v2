@@ -22,8 +22,12 @@ import {
     DialogContent,
     DialogTitle,
     FormControl,
+    FormControlLabel,
+    FormLabel,
     InputLabel,
     MenuItem,
+    Radio,
+    RadioGroup,
     Select,
     Stack,
     TextField,
@@ -53,9 +57,12 @@ function EditExpenseToolbar(props) {
 }
 
 export default function Report() {
+    const today = new Date().toISOString().split('T')[0]
+    const [currentDay, setCurrentDay] = useState(today)
     const [transactions, setTransactions] = useState([])
     const [open, setOpen] = useState(false)
     const [rows, setRows] = useState([])
+    const [categories, setCategories] = useState([])
     const [expenseCategories, setExpenseCategories] = useState([])
     const [incomeCategories, setIncomeCategories] = useState([])
     const [rowModesModel, setRowModesModel] = useState({})
@@ -73,6 +80,7 @@ export default function Report() {
         //     .max(50, { message: '内容は50文字以内にしてください。' }),
     })
 
+    // 取引追加処理
     const onSubmit = async data => {
         console.log(data)
         try {
@@ -103,8 +111,8 @@ export default function Report() {
 
     const {
         control,
-        // setValue,
-        // watch,
+        setValue,
+        watch,
         formState: { errors },
         // reset,
         handleSubmit,
@@ -113,12 +121,15 @@ export default function Report() {
         // resolver: zodResolver(transactionSchema),
         defaultValues: {
             type: 'expense',
-            date: '2021-09-01',
-            amount: 1000,
-            title: 'test',
+            date: currentDay,
+            amount: 0,
+            title: '',
             category: '',
         },
     })
+
+    // 収支タイプを監視
+    const currentType = watch('type')
 
     useEffect(() => {
         if (user) {
@@ -135,15 +146,26 @@ export default function Report() {
                 category: transaction.category
                     ? transaction.category.name
                     : 'N/A',
-                type: transaction.category ? transaction.category.type : 'N/A',
+                type: transaction.category.type == 'income' ? '収入' : '支出',
                 amount: transaction.amount,
                 date: transaction.date,
             }
         })
-        // console.log(newRows)
         setRows(newRows)
         console.log(transactions)
     }, [transactions])
+
+    useEffect(() => {
+        const newCategories =
+            currentType === 'income' ? incomeCategories : expenseCategories
+        console.log(newCategories)
+        setCategories(newCategories)
+    }, [currentType])
+
+    const incomeExpenseToggle = type => {
+        setValue('type', type)
+        setValue('category', '')
+    }
 
     const handleClose = () => {
         setOpen(false)
@@ -196,6 +218,7 @@ export default function Report() {
             const filteredIncomeCategories = fetchedCategories.filter(
                 cat => cat.type === 'income',
             )
+            setCategories(filteredExpenseCategories)
             setExpenseCategories(filteredExpenseCategories)
             setIncomeCategories(filteredIncomeCategories)
         } catch (err) {
@@ -398,6 +421,10 @@ export default function Report() {
                         slotProps={{
                             toolbar: {
                                 setOpen,
+                                setCategories,
+                                expenseCategories,
+                                incomeCategories,
+                                currentType,
                             },
                         }}
                     />
@@ -428,46 +455,30 @@ export default function Report() {
                                 // rules={{ required: 'This field is required' }}
                                 render={({ field }) => (
                                     <FormControl error={!!errors.type}>
-                                        <InputLabel id="type-select-label">
-                                            Type
-                                        </InputLabel>
-                                        <Select
+                                        {/* <FormLabel component="legend">
+                                            タイプ
+                                        </FormLabel> */}
+                                        <RadioGroup
                                             {...field}
-                                            label="タイプ"
-                                            labelId="type-select-label">
-                                            <MenuItem value="income">
-                                                Income
-                                            </MenuItem>
-                                            <MenuItem value="expense">
-                                                Expense
-                                            </MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                )}
-                            />
-                            {/* カテゴリー */}
-                            <Controller
-                                name="category"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <FormControl error={!!errors.category}>
-                                        <InputLabel id="category-select-label">
-                                            Category
-                                        </InputLabel>
-                                        <Select
-                                            {...field}
-                                            label="カテゴリ"
-                                            labelId="category-select-label">
-                                            {expenseCategories.map(category => (
-                                                <MenuItem
-                                                    key={category.id}
-                                                    value={category.id}>
-                                                    {category.name}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
+                                            aria-label="タイプ"
+                                            onChange={e => {
+                                                field.onChange(e)
+                                                incomeExpenseToggle(
+                                                    e.target.value,
+                                                )
+                                            }}
+                                            row>
+                                            <FormControlLabel
+                                                value="expense"
+                                                control={<Radio />}
+                                                label="支出"
+                                            />
+                                            <FormControlLabel
+                                                value="income"
+                                                control={<Radio />}
+                                                label="収入"
+                                            />
+                                        </RadioGroup>
                                     </FormControl>
                                 )}
                             />
@@ -480,11 +491,37 @@ export default function Report() {
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
-                                        label="Title"
+                                        label="項目名"
                                         type="text"
                                         error={!!errors.amount}
                                         helperText={errors.title?.message}
                                     />
+                                )}
+                            />
+                            {/* カテゴリー */}
+                            <Controller
+                                name="category"
+                                control={control}
+                                // defaultValue=""
+                                // rules={{ required: 'This field is required' }}
+                                render={({ field }) => (
+                                    <FormControl error={!!errors.category}>
+                                        <InputLabel id="category-select-label">
+                                            カテゴリー
+                                        </InputLabel>
+                                        <Select
+                                            {...field}
+                                            label="カテゴリ"
+                                            labelId="category-select-label">
+                                            {categories.map(category => (
+                                                <MenuItem
+                                                    key={category.id}
+                                                    value={category.id}>
+                                                    {category.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 )}
                             />
                             {/* 金額 */}
@@ -496,7 +533,7 @@ export default function Report() {
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
-                                        label="Amount"
+                                        label="金額"
                                         type="number"
                                         value={field.value}
                                         error={!!errors.amount}
@@ -514,7 +551,7 @@ export default function Report() {
                                     <TextField
                                         {...field}
                                         type="date"
-                                        label="Date"
+                                        label="日付"
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
@@ -524,7 +561,6 @@ export default function Report() {
                                 )}
                             />
                         </Stack>
-
                         <DialogActions>
                             <Button type="submit">追加</Button>
                         </DialogActions>

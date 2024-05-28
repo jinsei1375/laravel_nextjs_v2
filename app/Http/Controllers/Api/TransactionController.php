@@ -31,12 +31,14 @@ class TransactionController extends Controller
     public function store(Request $request, User $user)
     {
         $transaction = new Transaction;
-        $transaction->user_id = $user->id;
-        $transaction->title = $request->title;
-        $transaction->category_id = $request->category;
-        $transaction->amount = $request->amount;
-        $transaction->date = $request->date;
-        $transaction->save();
+        $transaction->fill([
+            'user_id' => $user->id,
+            'title' => $request->title,
+            'category_id' => $request->category,
+            'amount' => $request->amount,
+            'date' => $request->date,
+        ])->save();
+        $transaction->load('category');
 
         return response()->json($transaction);
     }
