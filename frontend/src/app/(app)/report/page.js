@@ -5,11 +5,9 @@ import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/DeleteOutlined'
 import {
-    GridRowModes,
     DataGrid,
     GridToolbarContainer,
     GridActionsCellItem,
-    GridRowEditStopReasons,
 } from '@mui/x-data-grid'
 import { useEffect, useState } from 'react'
 
@@ -33,8 +31,7 @@ import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from '@/lib/axios'
-import Snackbar from '@mui/material/Snackbar'
-import Grow from '@mui/material/Grow'
+import FlashMessage from '@/components/FlashMessage'
 
 function EditExpenseToolbar(props) {
     const { setOpen, setIsNew, reset, currentDay } = props
@@ -72,7 +69,6 @@ export default function Report() {
     const [categories, setCategories] = useState([])
     const [expenseCategories, setExpenseCategories] = useState([])
     const [incomeCategories, setIncomeCategories] = useState([])
-    const [rowModesModel, setRowModesModel] = useState({})
     const [isNew, setIsNew] = useState(false)
     const [state, setState] = useState({
         open: false,
@@ -108,6 +104,7 @@ export default function Report() {
                 if (response.status === 200) {
                     const newTransaction = response.data
                     setTransactions([...transactions, newTransaction])
+                    fetchTransactions()
                     console.log(newTransaction)
                     handleSnackBarOpen('追加しました')
                 } else {
@@ -146,6 +143,7 @@ export default function Report() {
                                 : row,
                         ),
                     )
+                    fetchTransactions()
                     handleSnackBarOpen('更新しました')
                 } else {
                     console.log('Error occurred while adding category')
@@ -186,6 +184,7 @@ export default function Report() {
         if (user) {
             fetchTransactions()
             fetchCategories()
+            setCurrentDay(today)
         }
     }, [user])
 
@@ -221,12 +220,6 @@ export default function Report() {
 
     const handleClose = () => {
         setOpen(false)
-    }
-
-    const handleRowEditStop = (params, event) => {
-        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-            event.defaultMuiPrevented = true
-        }
     }
 
     // 編集処理
@@ -288,6 +281,7 @@ export default function Report() {
             )
             if (response.status === 200) {
                 setRows(rows.filter(row => row.transactionId !== id))
+                fetchTransactions()
                 handleSnackBarOpen('削除しました')
             } else {
                 console.log('Error occurred while adding category')
@@ -297,22 +291,16 @@ export default function Report() {
         }
     }
 
-    const rowModesModelChange = newRowModesModel => {
-        setRowModesModel(newRowModesModel)
+    const handleSnackBarOpen = message => {
+        setState({
+            open: true,
+            message: message,
+        })
     }
-
-    // フラッシュメッセージ
     const handleSnackBarClose = () => {
         setState({
             ...state,
             open: false,
-        })
-    }
-    const handleSnackBarOpen = message => {
-        setState({
-            ...state,
-            open: open,
-            message: message,
         })
     }
 
@@ -398,10 +386,6 @@ export default function Report() {
                         rows={rows}
                         columns={expenseColumns}
                         editMode="row"
-                        rowModesModel={rowModesModel}
-                        onRowModesModelChange={rowModesModelChange}
-                        onRowEditStop={handleRowEditStop}
-                        processRowUpdate={processRowUpdate}
                         slots={{
                             toolbar: EditExpenseToolbar,
                         }}
@@ -416,6 +400,7 @@ export default function Report() {
                     />
                 </Box>
             </Box>
+            {/* 取引追加・編集フォーム */}
             <Dialog
                 open={open}
                 onClose={handleClose}
@@ -555,15 +540,11 @@ export default function Report() {
                     </Box>
                 </DialogContent>
             </Dialog>
-            <Snackbar
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            {/* フラッシュメッセージ */}
+            <FlashMessage
                 open={state.open}
-                onClose={handleSnackBarClose}
-                TransitionComponent={Grow}
                 message={state.message}
-                key={state.message}
-                autoHideDuration={2000}
-                sx={{ backgroundColor: 'green', textAlign: 'center' }}
+                handleClose={handleSnackBarClose}
             />
         </Box>
     )
