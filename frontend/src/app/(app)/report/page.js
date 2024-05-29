@@ -33,6 +33,8 @@ import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from '@/lib/axios'
+import Snackbar from '@mui/material/Snackbar'
+import Grow from '@mui/material/Grow'
 
 function EditExpenseToolbar(props) {
     const { setOpen, setIsNew, reset, currentDay } = props
@@ -72,6 +74,9 @@ export default function Report() {
     const [incomeCategories, setIncomeCategories] = useState([])
     const [rowModesModel, setRowModesModel] = useState({})
     const [isNew, setIsNew] = useState(false)
+    const [state, setState] = useState({
+        open: false,
+    })
 
     const { user } = useAuth({ middleware: 'auth' })
     const userId = user.id
@@ -104,6 +109,7 @@ export default function Report() {
                     const newTransaction = response.data
                     setTransactions([...transactions, newTransaction])
                     console.log(newTransaction)
+                    handleSnackBarOpen('追加しました')
                 } else {
                     console.log('Error occurred while adding transaction')
                 }
@@ -118,9 +124,6 @@ export default function Report() {
                     },
                 )
                 if (response.status === 200) {
-                    console.log(response.data)
-                    console.log(data.transactionId)
-                    console.log(data)
                     const updatedRow = {
                         id: data.id,
                         title: response.data.title,
@@ -143,6 +146,7 @@ export default function Report() {
                                 : row,
                         ),
                     )
+                    handleSnackBarOpen('更新しました')
                 } else {
                     console.log('Error occurred while adding category')
                 }
@@ -239,25 +243,6 @@ export default function Report() {
         setValue('transactionId', row.transactionId)
     }
 
-    const handleSaveClick = id => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View },
-        })
-    }
-
-    const handleCancelClick = id => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View, ignoreModifications: true },
-        })
-
-        const editedRow = rows.find(row => row.id === id)
-        if (editedRow.isNew) {
-            setRows(rows.filter(row => row.id !== id))
-        }
-    }
-
     // カテゴリー取得処理
     const fetchCategories = async () => {
         try {
@@ -293,59 +278,17 @@ export default function Report() {
         }
     }
 
-    // 編集・追加処理
-    const processRowUpdate = async newRow => {
-        console.log(newRow)
-        if (newRow.isNew) {
-            try {
-                const response = await axios.post(
-                    `http://localhost/api/${userId}/transaction`,
-                    { transaction: newRow },
-                )
-
-                if (response.status === 200) {
-                    setRows(oldRows => [...oldRows, response.data])
-                } else {
-                    console.log('Error occurred while adding category')
-                }
-            } catch (err) {
-                console.log(err)
-            }
-        } else {
-            try {
-                const response = await axios.put(
-                    `http://localhost/api/${userId}/transaction/${newRow}`,
-                    { transaction: newRow },
-                )
-                if (response.status === 200) {
-                    setRows(oldRows =>
-                        oldRows.map(row =>
-                            row.id === newRow.id ? response.data : row,
-                        ),
-                    )
-                } else {
-                    console.log('Error occurred while adding category')
-                }
-            } catch (err) {
-                console.log(err)
-            }
-        }
-        console.log(newRow)
-        const updatedRow = { ...newRow, isNew: false }
-        setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)))
-        return updatedRow
-    }
-
     // 削除処理
     const handleDeleteClick = id => async () => {
         console.log(id)
+        console.log(rows)
         try {
             const response = await axios.delete(
                 `http://localhost/api/${userId}/transaction/${id}`,
             )
             if (response.status === 200) {
-                setRows(rows.filter(row => row.id !== id))
-                console.log(response.data.message)
+                setRows(rows.filter(row => row.transactionId !== id))
+                handleSnackBarOpen('削除しました')
             } else {
                 console.log('Error occurred while adding category')
             }
@@ -356,6 +299,21 @@ export default function Report() {
 
     const rowModesModelChange = newRowModesModel => {
         setRowModesModel(newRowModesModel)
+    }
+
+    // フラッシュメッセージ
+    const handleSnackBarClose = () => {
+        setState({
+            ...state,
+            open: false,
+        })
+    }
+    const handleSnackBarOpen = message => {
+        setState({
+            ...state,
+            open: open,
+            message: message,
+        })
     }
 
     // 支出用カラム
@@ -597,6 +555,16 @@ export default function Report() {
                     </Box>
                 </DialogContent>
             </Dialog>
+            <Snackbar
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                open={state.open}
+                onClose={handleSnackBarClose}
+                TransitionComponent={Grow}
+                message={state.message}
+                key={state.message}
+                autoHideDuration={2000}
+                sx={{ backgroundColor: 'green', textAlign: 'center' }}
+            />
         </Box>
     )
 }
