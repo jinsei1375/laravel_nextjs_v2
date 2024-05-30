@@ -9,7 +9,7 @@ import {
     GridToolbarContainer,
     GridActionsCellItem,
 } from '@mui/x-data-grid'
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 
 import { useAuth } from '@/hooks/auth'
 import {
@@ -26,20 +26,29 @@ import {
     Select,
     Stack,
     TextField,
+    Typography,
 } from '@mui/material'
-import { z } from 'zod'
+import { set, z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from '@/lib/axios'
 import FlashMessage from '@/components/FlashMessage'
 
 function EditExpenseToolbar(props) {
-    const { setOpen, setIsNew, reset, currentDay } = props
+    const {
+        setOpen,
+        setIsNew,
+        reset,
+        currentDay,
+        currentMonth,
+        goToNextMonth,
+        goToPrevMonth,
+    } = props
 
     const handleClick = () => {
         reset({
             type: 'expense',
-            date: currentDay,
+            date: currentDay.toISOString().split('T')[0],
             amount: 0,
             category: '',
             title: '',
@@ -49,21 +58,38 @@ function EditExpenseToolbar(props) {
     }
 
     return (
-        <GridToolbarContainer>
-            <Button
-                color="primary"
-                startIcon={<AddIcon />}
-                onClick={handleClick}>
-                追加
-            </Button>
+        <GridToolbarContainer
+            sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex' }}>
+                <Button
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={handleClick}>
+                    追加
+                </Button>
+                <Typography variant="h6">
+                    {new Date(currentMonth).toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'long',
+                    })}
+                </Typography>
+            </Box>
+            <Box>
+                <Button onClick={goToPrevMonth}>前の月</Button>
+                <Button onClick={goToNextMonth}>次の月</Button>
+            </Box>
         </GridToolbarContainer>
     )
 }
 
 export default function Report() {
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date()
     const [currentDay, setCurrentDay] = useState(today)
+    const [currentMonth, setCurrentMonth] = useState(
+        new Date(today.getFullYear(), today.getMonth(), 1),
+    )
     const [transactions, setTransactions] = useState([])
+    const [monthlyTransactions, setMonthlyTransactions] = useState([])
     const [open, setOpen] = useState(false)
     const [rows, setRows] = useState([])
     const [categories, setCategories] = useState([])
@@ -189,7 +215,7 @@ export default function Report() {
     }, [user])
 
     useEffect(() => {
-        const newRows = transactions.map((transaction, index) => {
+        const newRows = monthlyTransactions.map((transaction, index) => {
             return {
                 id: index + 1,
                 title: transaction.title,
@@ -204,7 +230,7 @@ export default function Report() {
             }
         })
         setRows(newRows)
-    }, [transactions])
+    }, [transactions, monthlyTransactions])
 
     useEffect(() => {
         const newCategories =
@@ -212,6 +238,16 @@ export default function Report() {
         console.log(newCategories)
         setCategories(newCategories)
     }, [currentType])
+
+    useEffect(() => {
+        const filteredTransactions = transactions.filter(
+            transaction =>
+                new Date(transaction.date).getMonth() ===
+                currentMonth.getMonth(),
+        )
+        setMonthlyTransactions(filteredTransactions)
+        console.log(filteredTransactions)
+    }, [transactions, currentMonth])
 
     const incomeExpenseToggle = type => {
         setValue('type', type)
@@ -258,14 +294,32 @@ export default function Report() {
         }
     }
 
+    // 次の月へ
+    const goToNextMonth = () => {
+        setCurrentMonth(prevMonth => {
+            const nextMonth = new Date(prevMonth.getTime())
+            nextMonth.setMonth(prevMonth.getMonth() + 1)
+            return nextMonth
+        })
+    }
+
+    // 前の月へ
+    const goToPrevMonth = () => {
+        setCurrentMonth(prevMonth => {
+            const previousMonth = new Date(prevMonth.getTime())
+            previousMonth.setMonth(prevMonth.getMonth() - 1)
+            return previousMonth
+        })
+    }
+
     // 取引取得処理
     const fetchTransactions = async () => {
         try {
             const response = await axios.get(
                 `http://localhost/api/${userId}/transaction/`,
             )
-            const fetchedTransacions = response.data
-            setTransactions(fetchedTransacions)
+
+            setTransactions(response.data)
         } catch (err) {
             console.log(err)
         }
@@ -381,6 +435,7 @@ export default function Report() {
                         '& .textPrimary': {
                             color: 'text.primary',
                         },
+                        height: 450,
                     }}>
                     <DataGrid
                         rows={rows}
@@ -395,11 +450,15 @@ export default function Report() {
                                 setIsNew,
                                 reset,
                                 currentDay,
+                                currentMonth,
+                                goToNextMonth,
+                                goToPrevMonth,
                             },
                         }}
                     />
                 </Box>
             </Box>
+
             {/* 取引追加・編集フォーム */}
             <Dialog
                 open={open}
