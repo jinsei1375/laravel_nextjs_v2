@@ -9,19 +9,15 @@ import {
     GridToolbarContainer,
     GridActionsCellItem,
 } from '@mui/x-data-grid'
-import { use, useEffect, useState } from 'react'
-
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth'
 import {
-    Card,
-    CardContent,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     FormControl,
     FormControlLabel,
-    Grid,
     InputLabel,
     MenuItem,
     Radio,
@@ -31,12 +27,13 @@ import {
     TextField,
     Typography,
 } from '@mui/material'
-import { set, z } from 'zod'
+import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from '@/lib/axios'
 import FlashMessage from '@/components/FlashMessage'
 import { formatCurrency } from '@/app/utils/formatting'
+import MonthlySummary from '@/components/MonthlySummary'
 
 function EditExpenseToolbar(props) {
     const {
@@ -119,9 +116,9 @@ export default function Report() {
 
     // 取引追加処理
     const onSubmit = async data => {
-        console.log(data)
         try {
             if (isNew) {
+                console.log(data.amount)
                 const response = await axios.post(
                     `http://localhost/api/${userId}/transaction`,
                     {
@@ -227,7 +224,7 @@ export default function Report() {
                     ? transaction.category.name
                     : 'N/A',
                 type: transaction.category.type == 'income' ? '収入' : '支出',
-                amount: transaction.amount,
+                amount: `¥${formatCurrency(transaction.amount)}`,
                 date: transaction.date,
                 transactionId: transaction.id,
                 categoryId: transaction.category.id,
@@ -271,7 +268,7 @@ export default function Report() {
         setValue('title', row.title)
         setValue('type', row.type == '収入' ? 'income' : 'expense')
         setValue('category', row.categoryId)
-        setValue('amount', row.amount)
+        setValue('amount', row.amount.replace('¥', '').replace(/,/g, ''))
         setValue('date', row.date)
         setValue('transactionId', row.transactionId)
     }
@@ -362,21 +359,6 @@ export default function Report() {
         })
     }
 
-    // 月毎の収支取得
-    const { income, expense, balance } = monthlyTransactions.reduce(
-        (acc, transaction) => {
-            if (transaction.category.type === 'income') {
-                acc.income += transaction.amount
-            } else {
-                acc.expense += transaction.amount
-            }
-            acc.balance = acc.income - acc.expense
-
-            return acc
-        },
-        { income: 0, expense: 0, balance: 0 },
-    )
-
     // 支出用カラム
     const expenseColumns = [
         {
@@ -449,102 +431,7 @@ export default function Report() {
                 flexDirection: 'column',
             }}>
             {/* 収支 */}
-            <Grid container spacing={{ xs: 1, sm: 2 }} mb={2} pt={2}>
-                {/* 収入 */}
-                <Grid item xs={4} display={'flex'} flexDirection={'column'}>
-                    <Card
-                        sx={{
-                            // bgcolor: theme => theme.palette.incomeColor.main,
-                            // color: 'white',
-                            borderRadius: '10px',
-                            flexGrow: 1,
-                        }}>
-                        <CardContent sx={{ padding: { xs: 1, sm: 2 } }}>
-                            <Stack direction={'row'}>
-                                {/* <ArrowUpwardIcon sx={{ fontSize: '2rem' }} /> */}
-                                <Typography>収入</Typography>
-                            </Stack>
-                            <Typography
-                                textAlign={'right'}
-                                variant="h5"
-                                fontWeight={'fontWeightBold'}
-                                sx={{
-                                    wordBreak: 'break-word',
-                                    fontSize: {
-                                        xs: '.8rem',
-                                        sm: '1rem',
-                                        md: '1.2rem',
-                                    },
-                                }}>
-                                {/* ¥{formatCurrency(income)} */}¥
-                                {formatCurrency(income)}
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                {/* 支出 */}
-                <Grid item xs={4} display={'flex'} flexDirection={'column'}>
-                    <Card
-                        sx={{
-                            // bgcolor: theme => theme.palette.expenseColor.main,
-                            // color: 'white',
-                            borderRadius: '10px',
-                            flexGrow: 1,
-                        }}>
-                        <CardContent sx={{ padding: { xs: 1, sm: 2 } }}>
-                            <Stack direction={'row'}>
-                                {/* <ArrowDownwardIcon sx={{ fontSize: '2rem' }} /> */}
-                                <Typography>支出</Typography>
-                            </Stack>
-                            <Typography
-                                textAlign={'right'}
-                                variant="h5"
-                                fontWeight={'fontWeightBold'}
-                                sx={{
-                                    wordBreak: 'break-word',
-                                    fontSize: {
-                                        xs: '.8rem',
-                                        sm: '1rem',
-                                        md: '1.2rem',
-                                    },
-                                }}>
-                                ¥{formatCurrency(expense)}
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                {/* 残高 */}
-                <Grid item xs={4} display={'flex'} flexDirection={'column'}>
-                    <Card
-                        sx={{
-                            // bgcolor: theme => theme.palette.balanceColor.main,
-                            // color: 'white',
-                            borderRadius: '10px',
-                            flexGrow: 1,
-                        }}>
-                        <CardContent sx={{ padding: { xs: 1, sm: 2 } }}>
-                            <Stack direction={'row'}>
-                                {/* <AccountBalanceIcon sx={{ fontSize: '2rem' }} /> */}
-                                <Typography>残高</Typography>
-                            </Stack>
-                            <Typography
-                                textAlign={'right'}
-                                variant="h5"
-                                fontWeight={'fontWeightBold'}
-                                sx={{
-                                    wordBreak: 'break-word',
-                                    fontSize: {
-                                        xs: '.8rem',
-                                        sm: '1rem',
-                                        md: '1.2rem',
-                                    },
-                                }}>
-                                ¥{formatCurrency(balance)}
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+            <MonthlySummary monthlyTransactions={monthlyTransactions} />
             {/* 取引一覧 */}
             <Box sx={{ width: '100%' }}>
                 <Box
