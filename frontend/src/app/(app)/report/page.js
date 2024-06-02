@@ -18,6 +18,7 @@ import {
     DialogTitle,
     FormControl,
     FormControlLabel,
+    FormHelperText,
     InputLabel,
     MenuItem,
     Radio,
@@ -105,20 +106,28 @@ export default function Report() {
     const userId = user.id
 
     const transactionSchema = z.object({
-        // type: z.enum(['income', 'expense']),
-        // date: z.string().min(1, { message: '日付は必須です' }),
-        // amount: z.number().min(1, { message: '金額は1円以上必須です' }),
-        // title: z
-        //     .string()
-        //     .min(1, { message: '内容を入力してください' })
-        //     .max(50, { message: '内容は50文字以内にしてください。' }),
+        type: z.enum(['income', 'expense']),
+        date: z.string().min(1, { message: '日付は必須です' }),
+        amount: z.string().min(1, { message: '金額は1円以上必須です' }),
+        title: z
+            .string()
+            .min(1, { message: '内容を入力してください' })
+            .max(50, { message: '内容は50文字以内にしてください。' }),
+        category: z.number({ message: 'カテゴリーを選択してください' }),
+        // .enum([
+        //     ...expenseCategories.map(cat => cat.id),
+        //     ...incomeCategories.map(cat => cat.id),
+        // ])
+        // .refine(val => val !== '', {
+        //     message: 'カテゴリを選択してください',
+        // }),
     })
 
     // 取引追加処理
     const onSubmit = async data => {
         try {
             if (isNew) {
-                console.log(data.amount)
+                console.log(data)
                 const response = await axios.post(
                     `http://localhost/api/${userId}/transaction`,
                     {
@@ -183,8 +192,6 @@ export default function Report() {
         }
     }
 
-    const formOptions = { resolver: zodResolver(transactionSchema) }
-
     const {
         control,
         setValue,
@@ -194,7 +201,7 @@ export default function Report() {
         handleSubmit,
     } = useForm({
         // todo resolverを使うとエラーが出る
-        // resolver: zodResolver(transactionSchema),
+        resolver: zodResolver(transactionSchema),
         defaultValues: {
             type: 'expense',
             date: currentDay,
@@ -267,7 +274,7 @@ export default function Report() {
         setValue('id', row.id)
         setValue('title', row.title)
         setValue('type', row.type == '収入' ? 'income' : 'expense')
-        setValue('category', row.categoryId)
+        setValue('category', Number(row.categoryId))
         setValue('amount', row.amount.replace('¥', '').replace(/,/g, ''))
         setValue('date', row.date)
         setValue('transactionId', row.transactionId)
@@ -551,14 +558,26 @@ export default function Report() {
                                             {...field}
                                             label="カテゴリ"
                                             labelId="category-select-label">
-                                            {categories.map(category => (
-                                                <MenuItem
-                                                    key={category.id}
-                                                    value={category.id}>
-                                                    {category.name}
-                                                </MenuItem>
-                                            ))}
+                                            {categories.map(category => {
+                                                console.log(
+                                                    `category.id type: ${typeof category.id}, value: ${
+                                                        category.id
+                                                    }`,
+                                                )
+                                                return (
+                                                    <MenuItem
+                                                        key={category.id}
+                                                        value={Number(
+                                                            category.id,
+                                                        )}>
+                                                        {category.name}
+                                                    </MenuItem>
+                                                )
+                                            })}
                                         </Select>
+                                        <FormHelperText>
+                                            {errors.category?.message}
+                                        </FormHelperText>
                                     </FormControl>
                                 )}
                             />
