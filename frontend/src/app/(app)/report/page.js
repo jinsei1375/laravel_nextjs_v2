@@ -11,50 +11,32 @@ import {
 } from '@mui/x-data-grid'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth'
-import {
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    FormControlLabel,
-    FormHelperText,
-    InputLabel,
-    MenuItem,
-    Radio,
-    RadioGroup,
-    Select,
-    Stack,
-    TextField,
-    Typography,
-} from '@mui/material'
-import { z } from 'zod'
-import { Controller, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { Typography } from '@mui/material'
 import axios from '@/lib/axios'
 import FlashMessage from '@/components/FlashMessage'
 import { formatCurrency } from '@/app/utils/formatting'
 import MonthlySummary from '@/components/MonthlySummary'
+import TransactionFormDialog from '@/components/TransactionFormDialog'
 
 function EditExpenseToolbar(props) {
     const {
         setOpen,
         setIsNew,
-        reset,
-        currentDay,
+        // reset,
+        // currentDay,
         currentMonth,
         goToNextMonth,
         goToPrevMonth,
     } = props
 
     const handleClick = () => {
-        reset({
-            type: 'expense',
-            date: currentDay.toISOString().split('T')[0],
-            amount: 0,
-            category: '',
-            title: '',
-        })
+        // reset({
+        //     type: 'expense',
+        //     date: currentDay.toISOString().split('T')[0],
+        //     amount: 0,
+        //     category: '',
+        //     title: '',
+        // })
         setOpen(true)
         setIsNew(true)
     }
@@ -105,115 +87,6 @@ export default function Report() {
     const { user } = useAuth({ middleware: 'auth' })
     const userId = user.id
 
-    const transactionSchema = z.object({
-        type: z.enum(['income', 'expense']),
-        date: z.string().min(1, { message: '日付は必須です' }),
-        amount: z.string().min(1, { message: '金額は1円以上必須です' }),
-        title: z
-            .string()
-            .min(1, { message: '内容を入力してください' })
-            .max(50, { message: '内容は50文字以内にしてください。' }),
-        category: z.number({ message: 'カテゴリーを選択してください' }),
-        // .enum([
-        //     ...expenseCategories.map(cat => cat.id),
-        //     ...incomeCategories.map(cat => cat.id),
-        // ])
-        // .refine(val => val !== '', {
-        //     message: 'カテゴリを選択してください',
-        // }),
-    })
-
-    // 取引追加処理
-    const onSubmit = async data => {
-        try {
-            if (isNew) {
-                console.log(data)
-                const response = await axios.post(
-                    `http://localhost/api/${userId}/transaction`,
-                    {
-                        date: data.date,
-                        amount: data.amount,
-                        title: data.title,
-                        category: data.category,
-                    },
-                )
-                if (response.status === 200) {
-                    const newTransaction = response.data
-                    setTransactions([...transactions, newTransaction])
-                    fetchTransactions()
-                    console.log(newTransaction)
-                    handleSnackBarOpen('追加しました')
-                } else {
-                    console.log('Error occurred while adding transaction')
-                }
-            } else {
-                const response = await axios.put(
-                    `http://localhost/api/${userId}/transaction/${data.transactionId}`,
-                    {
-                        date: data.date,
-                        amount: data.amount,
-                        title: data.title,
-                        category: data.category,
-                    },
-                )
-                if (response.status === 200) {
-                    const updatedRow = {
-                        id: data.id,
-                        title: response.data.title,
-                        category: response.data.category
-                            ? response.data.category.name
-                            : 'N/A',
-                        type:
-                            response.data.category.type == 'income'
-                                ? '収入'
-                                : '支出',
-                        amount: response.data.amount,
-                        date: response.data.date,
-                        transactionId: response.data.id,
-                        categoryId: response.data.category.id,
-                    }
-                    setRows(oldRows =>
-                        oldRows.map(row =>
-                            row.transactionId === data.transactionId
-                                ? updatedRow
-                                : row,
-                        ),
-                    )
-                    fetchTransactions()
-                    handleSnackBarOpen('更新しました')
-                } else {
-                    console.log('Error occurred while adding category')
-                }
-            }
-            setOpen(false)
-        } catch (error) {
-            // Handle error
-            console.error(error)
-        }
-    }
-
-    const {
-        control,
-        setValue,
-        watch,
-        formState: { errors },
-        reset,
-        handleSubmit,
-    } = useForm({
-        // todo resolverを使うとエラーが出る
-        resolver: zodResolver(transactionSchema),
-        defaultValues: {
-            type: 'expense',
-            date: currentDay,
-            amount: 0,
-            title: '',
-            category: '',
-        },
-    })
-
-    // 収支タイプを監視
-    const currentType = watch('type')
-
     useEffect(() => {
         if (user) {
             fetchTransactions()
@@ -241,13 +114,6 @@ export default function Report() {
     }, [transactions, monthlyTransactions])
 
     useEffect(() => {
-        const newCategories =
-            currentType === 'income' ? incomeCategories : expenseCategories
-        console.log(newCategories)
-        setCategories(newCategories)
-    }, [currentType])
-
-    useEffect(() => {
         const filteredTransactions = transactions.filter(
             transaction =>
                 new Date(transaction.date).getMonth() ===
@@ -256,11 +122,6 @@ export default function Report() {
         setMonthlyTransactions(filteredTransactions)
         console.log(filteredTransactions)
     }, [transactions, currentMonth])
-
-    const incomeExpenseToggle = type => {
-        setValue('type', type)
-        setValue('category', '')
-    }
 
     const handleClose = () => {
         setOpen(false)
@@ -463,7 +324,7 @@ export default function Report() {
                             toolbar: {
                                 setOpen,
                                 setIsNew,
-                                reset,
+                                // reset,
                                 currentDay,
                                 currentMonth,
                                 goToNextMonth,
@@ -475,157 +336,21 @@ export default function Report() {
             </Box>
 
             {/* 取引追加・編集フォーム */}
-            <Dialog
+            <TransactionFormDialog
                 open={open}
-                onClose={handleClose}
-                sx={
-                    {
-                        // width: '50%',
-                        // height: '300px',
-                        // display: 'flex',
-                        // justifyContent: 'center',
-                        // alignItems: 'center',
-                    }
-                }>
-                <DialogTitle>取引追加</DialogTitle>
-                <DialogContent>
-                    <Box component={'form'} onSubmit={handleSubmit(onSubmit)}>
-                        <Stack spacing={2}>
-                            {/* 収支タイプ */}
-                            <Controller
-                                mt={2}
-                                name="type"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <FormControl error={!!errors.type}>
-                                        {/* <FormLabel component="legend">
-                                            タイプ
-                                        </FormLabel> */}
-                                        <RadioGroup
-                                            {...field}
-                                            aria-label="タイプ"
-                                            onChange={e => {
-                                                field.onChange(e)
-                                                incomeExpenseToggle(
-                                                    e.target.value,
-                                                )
-                                            }}
-                                            row>
-                                            <FormControlLabel
-                                                value="expense"
-                                                control={<Radio />}
-                                                label="支出"
-                                            />
-                                            <FormControlLabel
-                                                value="income"
-                                                control={<Radio />}
-                                                label="収入"
-                                            />
-                                        </RadioGroup>
-                                    </FormControl>
-                                )}
-                            />
-                            {/* タイトル */}
-                            <Controller
-                                name="title"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        label="項目名"
-                                        type="text"
-                                        error={!!errors.amount}
-                                        helperText={errors.title?.message}
-                                    />
-                                )}
-                            />
-                            {/* カテゴリー */}
-                            <Controller
-                                name="category"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <FormControl error={!!errors.category}>
-                                        <InputLabel id="category-select-label">
-                                            カテゴリー
-                                        </InputLabel>
-                                        <Select
-                                            {...field}
-                                            label="カテゴリ"
-                                            labelId="category-select-label">
-                                            {categories.map(category => {
-                                                console.log(
-                                                    `category.id type: ${typeof category.id}, value: ${
-                                                        category.id
-                                                    }`,
-                                                )
-                                                return (
-                                                    <MenuItem
-                                                        key={category.id}
-                                                        value={Number(
-                                                            category.id,
-                                                        )}>
-                                                        {category.name}
-                                                    </MenuItem>
-                                                )
-                                            })}
-                                        </Select>
-                                        <FormHelperText>
-                                            {errors.category?.message}
-                                        </FormHelperText>
-                                    </FormControl>
-                                )}
-                            />
-                            {/* 金額 */}
-                            <Controller
-                                name="amount"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        label="金額"
-                                        type="number"
-                                        value={field.value}
-                                        error={!!errors.amount}
-                                        helperText={errors.amount?.message}
-                                    />
-                                )}
-                            />
-                            {/* 日付 */}
-                            <Controller
-                                name="date"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        type="date"
-                                        label="日付"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        error={!!errors.date}
-                                        helperText={errors.date?.message}
-                                    />
-                                )}
-                            />
-                        </Stack>
-                        <DialogActions>
-                            <Button type="submit">
-                                {isNew ? '追加' : '更新'}
-                            </Button>
-                        </DialogActions>
-                    </Box>
-                </DialogContent>
-            </Dialog>
+                setOpen={setOpen}
+                handleClose={handleClose}
+                currentDay={currentDay}
+                isNew={isNew}
+                expenseCategories={expenseCategories}
+                incomeCategories={incomeCategories}
+                categories={categories}
+                setCategories={setCategories}
+                userId={userId}
+                setTransactions={setTransactions}
+                fetchTransactions={fetchTransactions}
+                transactions={transactions}
+            />
             {/* フラッシュメッセージ */}
             <FlashMessage
                 open={state.open}
