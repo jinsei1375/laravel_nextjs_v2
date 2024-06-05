@@ -71,14 +71,14 @@ const Navigation = ({ user }) => {
                                     </div>
                                 </button>
                             }>
-                            {/* Authentication */}
                             <DropdownButton onClick={logout}>
                                 Logout
                             </DropdownButton>
+                            <DropdownButton>
+                                <Link href="/user">User Profile</Link>
+                            </DropdownButton>
                         </Dropdown>
                     </div>
-
-                    {/* Hamburger */}
                     <div className="-mr-2 flex items-center sm:hidden">
                         <button
                             onClick={() => setOpen(open => !open)}
