@@ -37,6 +37,8 @@ const TransactionFormDialog = ({
     setTransactions,
     fetchTransactions,
     transactions,
+    selectedTransaction,
+    selectedRow,
 }) => {
     const [state, setState] = useState({
         open: false,
@@ -158,6 +160,30 @@ const TransactionFormDialog = ({
         setCategories(newCategories)
     }, [currentType])
 
+    // フォーム内容更新
+    useEffect(() => {
+        if (!isNew) {
+            setValue('id', selectedRow.id)
+            setValue('title', selectedRow.title)
+            setValue('type', selectedRow.type == '収入' ? 'income' : 'expense')
+            setValue('category', Number(selectedRow.categoryId))
+            setValue(
+                'amount',
+                selectedRow.amount?.replace('¥', '').replace(/,/g, ''),
+            )
+            setValue('date', selectedRow.date)
+            setValue('transactionId', selectedRow.transactionId)
+        } else {
+            reset({
+                type: 'expense',
+                date: currentDay,
+                amount: 0,
+                category: '',
+                content: '',
+            })
+        }
+    }, [isNew, selectedRow, open])
+
     const incomeExpenseToggle = type => {
         setValue('type', type)
         setValue('category', '')
@@ -177,149 +203,135 @@ const TransactionFormDialog = ({
     }
 
     return (
-        <>
-            <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>取引追加</DialogTitle>
-                <DialogContent>
-                    <Box component={'form'} onSubmit={handleSubmit(onSubmit)}>
-                        <Stack spacing={2}>
-                            {/* 収支タイプ */}
-                            <Controller
-                                mt={2}
-                                name="type"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <FormControl error={!!errors.type}>
-                                        {/* <FormLabel component="legend">
+        <Dialog open={open} onClose={handleClose}>
+            <DialogTitle>取引追加</DialogTitle>
+            <DialogContent>
+                <Box component={'form'} onSubmit={handleSubmit(onSubmit)}>
+                    <Stack spacing={2}>
+                        {/* 収支タイプ */}
+                        <Controller
+                            mt={2}
+                            name="type"
+                            control={control}
+                            // defaultValue=""
+                            // rules={{ required: 'This field is required' }}
+                            render={({ field }) => (
+                                <FormControl error={!!errors.type}>
+                                    {/* <FormLabel component="legend">
                                             タイプ
                                         </FormLabel> */}
-                                        <RadioGroup
-                                            {...field}
-                                            aria-label="タイプ"
-                                            onChange={e => {
-                                                field.onChange(e)
-                                                incomeExpenseToggle(
-                                                    e.target.value,
-                                                )
-                                            }}
-                                            row>
-                                            <FormControlLabel
-                                                value="expense"
-                                                control={<Radio />}
-                                                label="支出"
-                                            />
-                                            <FormControlLabel
-                                                value="income"
-                                                control={<Radio />}
-                                                label="収入"
-                                            />
-                                        </RadioGroup>
-                                    </FormControl>
-                                )}
-                            />
-                            {/* タイトル */}
-                            <Controller
-                                name="title"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <TextField
+                                    <RadioGroup
                                         {...field}
-                                        label="項目名"
-                                        type="text"
-                                        error={!!errors.amount}
-                                        helperText={errors.title?.message}
-                                    />
-                                )}
-                            />
-                            {/* カテゴリー */}
-                            <Controller
-                                name="category"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <FormControl error={!!errors.category}>
-                                        <InputLabel id="category-select-label">
-                                            カテゴリー
-                                        </InputLabel>
-                                        <Select
-                                            {...field}
-                                            label="カテゴリ"
-                                            labelId="category-select-label">
-                                            {categories.map(category => {
-                                                return (
-                                                    <MenuItem
-                                                        key={category.id}
-                                                        value={Number(
-                                                            category.id,
-                                                        )}>
-                                                        {category.name}
-                                                    </MenuItem>
-                                                )
-                                            })}
-                                        </Select>
-                                        <FormHelperText>
-                                            {errors.category?.message}
-                                        </FormHelperText>
-                                    </FormControl>
-                                )}
-                            />
-                            {/* 金額 */}
-                            <Controller
-                                name="amount"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        label="金額"
-                                        type="number"
-                                        value={field.value}
-                                        error={!!errors.amount}
-                                        helperText={errors.amount?.message}
-                                    />
-                                )}
-                            />
-                            {/* 日付 */}
-                            <Controller
-                                name="date"
-                                control={control}
-                                // defaultValue=""
-                                // rules={{ required: 'This field is required' }}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        type="date"
-                                        label="日付"
-                                        InputLabelProps={{
-                                            shrink: true,
+                                        aria-label="タイプ"
+                                        onChange={e => {
+                                            field.onChange(e)
+                                            incomeExpenseToggle(e.target.value)
                                         }}
-                                        error={!!errors.date}
-                                        helperText={errors.date?.message}
-                                    />
-                                )}
-                            />
-                        </Stack>
-                        <DialogActions>
-                            <Button type="submit">
-                                {isNew ? '追加' : '更新'}
-                            </Button>
-                        </DialogActions>
-                    </Box>
-                </DialogContent>
-            </Dialog>
-            {/* フラッシュメッセージ */}
-            <FlashMessage
-                open={state.open}
-                message={state.message}
-                handleClose={handleSnackBarClose}
-            />
-        </>
+                                        row>
+                                        <FormControlLabel
+                                            value="expense"
+                                            control={<Radio />}
+                                            label="支出"
+                                        />
+                                        <FormControlLabel
+                                            value="income"
+                                            control={<Radio />}
+                                            label="収入"
+                                        />
+                                    </RadioGroup>
+                                </FormControl>
+                            )}
+                        />
+                        {/* タイトル */}
+                        <Controller
+                            name="title"
+                            control={control}
+                            // defaultValue=""
+                            // rules={{ required: 'This field is required' }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="項目名"
+                                    type="text"
+                                    error={!!errors.amount}
+                                    helperText={errors.title?.message}
+                                />
+                            )}
+                        />
+                        {/* カテゴリー */}
+                        <Controller
+                            name="category"
+                            control={control}
+                            // defaultValue=""
+                            // rules={{ required: 'This field is required' }}
+                            render={({ field }) => (
+                                <FormControl error={!!errors.category}>
+                                    <InputLabel id="category-select-label">
+                                        カテゴリー
+                                    </InputLabel>
+                                    <Select
+                                        {...field}
+                                        label="カテゴリ"
+                                        labelId="category-select-label">
+                                        {categories.map(category => {
+                                            return (
+                                                <MenuItem
+                                                    key={category.id}
+                                                    value={Number(category.id)}>
+                                                    {category.name}
+                                                </MenuItem>
+                                            )
+                                        })}
+                                    </Select>
+                                    <FormHelperText>
+                                        {errors.category?.message}
+                                    </FormHelperText>
+                                </FormControl>
+                            )}
+                        />
+                        {/* 金額 */}
+                        <Controller
+                            name="amount"
+                            control={control}
+                            // defaultValue=""
+                            // rules={{ required: 'This field is required' }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    label="金額"
+                                    type="number"
+                                    value={field.value}
+                                    error={!!errors.amount}
+                                    helperText={errors.amount?.message}
+                                />
+                            )}
+                        />
+                        {/* 日付 */}
+                        <Controller
+                            name="date"
+                            control={control}
+                            // defaultValue=""
+                            // rules={{ required: 'This field is required' }}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    type="date"
+                                    label="日付"
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    error={!!errors.date}
+                                    helperText={errors.date?.message}
+                                />
+                            )}
+                        />
+                    </Stack>
+                    <DialogActions>
+                        <Button type="submit">{isNew ? '追加' : '更新'}</Button>
+                    </DialogActions>
+                </Box>
+            </DialogContent>
+        </Dialog>
     )
 }
 

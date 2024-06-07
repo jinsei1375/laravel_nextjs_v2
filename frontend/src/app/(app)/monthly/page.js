@@ -21,12 +21,16 @@ const Top = () => {
     const {
         today,
         currentDay,
+        setCurrentDay,
         expenseCategories,
         incomeCategories,
         categories,
         setCategories,
         setTransactions,
+        fetchTransactions,
+        fetchCategories,
     } = useAppContext()
+
     const { user } = useAuth({ middleware: 'auth' })
     const [currentMonth, setCurrentMonth] = useState(
         new Date(today.getFullYear(), today.getMonth(), 1),
@@ -56,12 +60,19 @@ const Top = () => {
     }, [transactions, currentMonth])
 
     useEffect(() => {
+        fetchTransactions(user)
+        fetchCategories(user)
+    }, [])
+
+    useEffect(() => {
         setMonthlyTransactions(filteredTransactions)
     }, [filteredTransactions])
 
     const handleDateChange = info => {
         console.log(info)
         setSelectedDate(info.dateStr)
+        setCurrentDay(info.dateStr)
+        console.log(currentDay)
         setOpen(true)
     }
 

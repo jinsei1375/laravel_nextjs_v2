@@ -83,6 +83,7 @@ export default function Report() {
     const [state, setState] = useState({
         open: false,
     })
+    const [selectedRow, setSelectedRow] = useState({})
 
     const { user } = useAuth({ middleware: 'auth' })
     const userId = user.id
@@ -131,14 +132,8 @@ export default function Report() {
     const handleEditClick = row => () => {
         setOpen(true)
         setIsNew(false)
+        setSelectedRow(row)
         console.log(row)
-        setValue('id', row.id)
-        setValue('title', row.title)
-        setValue('type', row.type == '収入' ? 'income' : 'expense')
-        setValue('category', Number(row.categoryId))
-        setValue('amount', row.amount.replace('¥', '').replace(/,/g, ''))
-        setValue('date', row.date)
-        setValue('transactionId', row.transactionId)
     }
 
     // カテゴリー取得処理
@@ -350,6 +345,7 @@ export default function Report() {
                 setTransactions={setTransactions}
                 fetchTransactions={fetchTransactions}
                 transactions={transactions}
+                selectedRow={selectedRow}
             />
             {/* フラッシュメッセージ */}
             <FlashMessage
