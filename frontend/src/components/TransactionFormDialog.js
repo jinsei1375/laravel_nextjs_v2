@@ -21,7 +21,7 @@ import {
 import React, { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
-import FlashMessage from './FlashMessage'
+import { useAppContext } from '@/context/AppContext'
 
 const TransactionFormDialog = ({
     open,
@@ -29,26 +29,29 @@ const TransactionFormDialog = ({
     handleClose,
     currentDay,
     isNew,
-    expenseCategories,
-    incomeCategories,
-    setCategories,
     categories,
-    userId,
-    setTransactions,
-    fetchTransactions,
-    transactions,
-    selectedTransaction,
     selectedRow,
+    userId,
 }) => {
     const [state, setState] = useState({
         open: false,
     })
+
+    const {
+        transactions,
+        setTransactions,
+        fetchTransactions,
+        setCategories,
+        expenseCategories,
+        incomeCategories,
+    } = useAppContext()
 
     // 取引追加処理
     const onSubmit = async data => {
         try {
             if (isNew) {
                 console.log(data)
+                console.log(userId)
                 const response = await axios.post(
                     `http://localhost/api/${userId}/transaction`,
                     {

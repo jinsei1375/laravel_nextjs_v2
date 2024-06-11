@@ -6,7 +6,6 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { useAuth } from '@/hooks/auth'
 import MonthlySummary from '@/components/MonthlySummary'
-import { fetchTransactions } from '@/app/utils/fetchTransactions'
 import { useTransactions } from '@/hooks/useTransactions'
 import TransactionFormDialog from '@/components/TransactionFormDialog'
 import { useAppContext } from '@/context/AppContext'
@@ -14,7 +13,6 @@ import { useAppContext } from '@/context/AppContext'
 const Top = () => {
     const [selectedDate, setSelectedDate] = useState(null)
     const [open, setOpen] = useState(false)
-    const [amount, setAmount] = useState('')
     const [monthlyTransactions, setMonthlyTransactions] = useState([])
     const [isNew, setIsNew] = useState(true)
 
@@ -22,11 +20,7 @@ const Top = () => {
         today,
         currentDay,
         setCurrentDay,
-        expenseCategories,
-        incomeCategories,
         categories,
-        setCategories,
-        setTransactions,
         fetchTransactions,
         fetchCategories,
     } = useAppContext()
@@ -62,17 +56,15 @@ const Top = () => {
     useEffect(() => {
         fetchTransactions(user)
         fetchCategories(user)
-    }, [])
+    }, [user])
 
     useEffect(() => {
         setMonthlyTransactions(filteredTransactions)
     }, [filteredTransactions])
 
     const handleDateChange = info => {
-        console.log(info)
         setSelectedDate(info.dateStr)
         setCurrentDay(info.dateStr)
-        console.log(currentDay)
         setOpen(true)
     }
 
@@ -80,9 +72,6 @@ const Top = () => {
         setOpen(false)
     }
 
-    const handleAmountChange = event => {
-        setAmount(event.target.value)
-    }
     const handleViewChange = (view, element) => {
         setCurrentViewDate(view.startStr)
     }
@@ -102,6 +91,7 @@ const Top = () => {
                 datesSet={handleViewChange}
             />
 
+            {/* <DialogTest /> */}
             {/* 取引追加・編集フォーム */}
             <TransactionFormDialog
                 open={open}
@@ -109,14 +99,8 @@ const Top = () => {
                 handleClose={handleClose}
                 currentDay={currentDay}
                 isNew={isNew}
-                expenseCategories={expenseCategories}
-                incomeCategories={incomeCategories}
                 categories={categories}
-                setCategories={setCategories}
                 userId={user.id}
-                setTransactions={setTransactions}
-                fetchTransactions={fetchTransactions}
-                transactions={transactions}
             />
         </>
     )

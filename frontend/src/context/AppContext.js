@@ -136,6 +136,7 @@ export const AppContextProvider = ({ children }) => {
                 setTransactions,
                 fetchTransactions,
                 onSubmit,
+                userId,
             }}>
             {children}
         </AppContext.Provider>
