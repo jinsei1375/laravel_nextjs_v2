@@ -9,6 +9,7 @@ import MonthlySummary from '@/components/MonthlySummary'
 import { useTransactions } from '@/hooks/useTransactions'
 import TransactionFormDialog from '@/components/TransactionFormDialog'
 import { useAppContext } from '@/context/AppContext'
+import { formatCurrency } from '@/app/utils/formatting'
 
 const Top = () => {
     const [selectedDate, setSelectedDate] = useState(null)
@@ -62,6 +63,69 @@ const Top = () => {
         setMonthlyTransactions(filteredTransactions)
     }, [filteredTransactions])
 
+    const dailyBalances = monthlyTransactions.reduce((acc, transaction) => {
+        const date = new Date(transaction.date).getDate()
+        const amount = transaction.amount
+        const type = transaction.category.type
+
+        if (!acc[date]) {
+            acc[date] = {
+                income: 0,
+                expense: 0,
+                balance: 0,
+            }
+        }
+
+        if (type === 'income') {
+            acc[date].income += amount
+        } else if (type === 'expense') {
+            acc[date].expense += amount
+        }
+
+        acc[date].balance = acc[date].income - acc[date].expense
+
+        return acc
+    }, {})
+
+    const calendarEvents = Object.keys(dailyBalances).map(date => {
+        const { income, expense, balance } = dailyBalances[date]
+        // 現在の月と年を取得
+        const year = currentMonth.getFullYear()
+        const month = currentMonth.getMonth() + 1 // getMonth() は 0 から始まるため、+1 する
+        // 日付を ISO 8601 形式に変換
+        const isoDate = `${year}-${month
+            .toString()
+            .padStart(2, '0')}-${date.padStart(2, '0')}`
+        return {
+            start: isoDate,
+            income: formatCurrency(income),
+            expense: formatCurrency(expense),
+            balance: formatCurrency(balance),
+        }
+    })
+
+    const renderEventContent = eventInfo => {
+        return (
+            <div>
+                <div className="money" id="event-income">
+                    {eventInfo.event.extendedProps.income}
+                </div>
+                <div
+                    className="money"
+                    id="event-expense"
+                    style={{ backgroundColor: 'red' }}>
+                    {eventInfo.event.extendedProps.expense}
+                </div>
+                <div
+                    className="money"
+                    id="event-balance"
+                    style={{ backgroundColor: 'green' }}>
+                    {eventInfo.event.extendedProps.balance}
+                </div>
+            </div>
+        )
+    }
+
     const handleDateChange = info => {
         setSelectedDate(info.dateStr)
         setCurrentDay(info.dateStr)
@@ -89,6 +153,8 @@ const Top = () => {
                 dateClick={handleDateChange}
                 viewDidMount={handleViewChange}
                 datesSet={handleViewChange}
+                events={calendarEvents}
+                eventContent={renderEventContent}
             />
 
             {/* <DialogTest /> */}
