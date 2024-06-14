@@ -20,6 +20,7 @@ const Calendar = ({
     )
     const [currentViewDate, setCurrentViewDate] = useState(today)
     const [calendarEvents, setCalendarEvents] = useState([])
+    const [dailyBalances, setDailyBalances] = useState({})
 
     const transactions = useTransactions(user)
 
@@ -43,38 +44,56 @@ const Calendar = ({
         )
     }, [transactions, currentMonth])
 
+    // useMemoを使用してmonthlyTransactionsを計算
+    const calculatedMonthlyTransactions = useMemo(() => {
+        // 現在の月に該当するトランザクションをフィルタリング
+        return transactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date)
+            return (
+                transactionDate.getMonth() === currentMonth.getMonth() &&
+                transactionDate.getFullYear() === currentMonth.getFullYear()
+            )
+        })
+    }, [transactions, currentMonth])
+
+    // useEffectや他の方法でcalculatedMonthlyTransactionsの値が変わった時に
+    // setMonthlyTransactionsを呼び出して状態を更新する
+    useEffect(() => {
+        setMonthlyTransactions(calculatedMonthlyTransactions)
+    }, [calculatedMonthlyTransactions, setMonthlyTransactions])
+
     useEffect(() => {
         setMonthlyTransactions(filteredTransactions)
-        const dailyBalances = monthlyTransactions.reduce((acc, transaction) => {
-            const date = new Date(transaction.date).getDate()
-            const amount = transaction.amount
-            const type = transaction.category.type
+        const filteredDailyBalances = monthlyTransactions.reduce(
+            (acc, transaction) => {
+                const date = new Date(transaction.date).getDate()
+                const amount = transaction.amount
+                const type = transaction.category.type
 
-            if (!acc[date]) {
-                acc[date] = {
-                    income: 0,
-                    expense: 0,
-                    balance: 0,
+                if (!acc[date]) {
+                    acc[date] = { income: 0, expense: 0, balance: 0 }
                 }
-            }
 
-            if (type === 'income') {
-                acc[date].income += amount
-            } else if (type === 'expense') {
-                acc[date].expense += amount
-            }
+                if (type === 'income') {
+                    acc[date].income += amount
+                } else if (type === 'expense') {
+                    acc[date].expense += amount
+                }
 
-            acc[date].balance = acc[date].income - acc[date].expense
+                acc[date].balance = acc[date].income - acc[date].expense
 
-            return acc
-        }, {})
+                return acc
+            },
+            {},
+        )
+        setDailyBalances(filteredDailyBalances)
+    }, [filteredTransactions, monthlyTransactions])
 
+    useEffect(() => {
         const filteredCalendarEvents = Object.keys(dailyBalances).map(date => {
             const { income, expense, balance } = dailyBalances[date]
-            // 現在の月と年を取得
             const year = currentMonth.getFullYear()
-            const month = currentMonth.getMonth() + 1 // getMonth() は 0 から始まるため、+1 する
-            // 日付を ISO 8601 形式に変換
+            const month = currentMonth.getMonth() + 1
             const isoDate = `${year}-${month
                 .toString()
                 .padStart(2, '0')}-${date.padStart(2, '0')}`
@@ -86,7 +105,7 @@ const Calendar = ({
             }
         })
         setCalendarEvents(filteredCalendarEvents)
-    }, [filteredTransactions, monthlyTransactions, currentMonth])
+    }, [dailyBalances, currentMonth])
 
     const renderEventContent = eventInfo => {
         return (
