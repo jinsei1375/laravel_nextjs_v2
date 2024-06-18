@@ -32,6 +32,7 @@ const TransactionFormDialog = ({
     categories,
     selectedRow,
     userId,
+    setRows,
 }) => {
     const [state, setState] = useState({
         open: false,
@@ -72,10 +73,10 @@ const TransactionFormDialog = ({
                 }
             } else {
                 const response = await axios.put(
-                    `http://localhost/api/${userId}/transaction/${data.transactionId}`,
+                    `http://localhost/api/${userId}/transaction/${selectedRow.transactionId}`,
                     {
                         date: data.date,
-                        amount: data.amount,
+                        amount: parseFloat(data.amount),
                         title: data.title,
                         category: data.category,
                     },
@@ -150,6 +151,7 @@ const TransactionFormDialog = ({
             amount: 0,
             title: '',
             category: '',
+            transactionId: '',
         },
     })
 
@@ -176,6 +178,7 @@ const TransactionFormDialog = ({
             )
             setValue('date', selectedRow.date)
             setValue('transactionId', selectedRow.transactionId)
+            console.log(selectedRow)
         } else {
             reset({
                 type: 'expense',

@@ -17,6 +17,7 @@ import FlashMessage from '@/components/FlashMessage'
 import { formatCurrency } from '@/app/utils/formatting'
 import MonthlySummary from '@/components/MonthlySummary'
 import TransactionFormDialog from '@/components/TransactionFormDialog'
+import Header from '../Header'
 
 function EditExpenseToolbar(props) {
     const {
@@ -112,6 +113,7 @@ export default function Report() {
             }
         })
         setRows(newRows)
+        console.log(newRows)
     }, [transactions, monthlyTransactions])
 
     useEffect(() => {
@@ -287,72 +289,76 @@ export default function Report() {
     ]
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                flexDirection: 'column',
-            }}>
-            {/* 収支 */}
-            <MonthlySummary monthlyTransactions={monthlyTransactions} />
-            {/* 取引一覧 */}
-            <Box sx={{ width: '100%' }}>
-                <Box
-                    sx={{
-                        width: '100%',
-                        '& .actions': {
-                            color: 'text.secondary',
-                        },
-                        '& .textPrimary': {
-                            color: 'text.primary',
-                        },
-                        height: 450,
-                    }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={expenseColumns}
-                        editMode="row"
-                        slots={{
-                            toolbar: EditExpenseToolbar,
-                        }}
-                        slotProps={{
-                            toolbar: {
-                                setOpen,
-                                setIsNew,
-                                // reset,
-                                currentDay,
-                                currentMonth,
-                                goToNextMonth,
-                                goToPrevMonth,
+        <>
+            <Header title="Report" />
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                }}>
+                {/* 収支 */}
+                <MonthlySummary monthlyTransactions={monthlyTransactions} />
+                {/* 取引一覧 */}
+                <Box sx={{ width: '100%' }}>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            '& .actions': {
+                                color: 'text.secondary',
                             },
-                        }}
-                    />
+                            '& .textPrimary': {
+                                color: 'text.primary',
+                            },
+                            height: 450,
+                        }}>
+                        <DataGrid
+                            rows={rows}
+                            columns={expenseColumns}
+                            editMode="row"
+                            slots={{
+                                toolbar: EditExpenseToolbar,
+                            }}
+                            slotProps={{
+                                toolbar: {
+                                    setOpen,
+                                    setIsNew,
+                                    // reset,
+                                    currentDay,
+                                    currentMonth,
+                                    goToNextMonth,
+                                    goToPrevMonth,
+                                },
+                            }}
+                        />
+                    </Box>
                 </Box>
-            </Box>
 
-            {/* 取引追加・編集フォーム */}
-            <TransactionFormDialog
-                open={open}
-                setOpen={setOpen}
-                handleClose={handleClose}
-                currentDay={currentDay}
-                isNew={isNew}
-                expenseCategories={expenseCategories}
-                incomeCategories={incomeCategories}
-                categories={categories}
-                setCategories={setCategories}
-                userId={userId}
-                setTransactions={setTransactions}
-                fetchTransactions={fetchTransactions}
-                transactions={transactions}
-                selectedRow={selectedRow}
-            />
-            {/* フラッシュメッセージ */}
-            <FlashMessage
-                open={state.open}
-                message={state.message}
-                handleClose={handleSnackBarClose}
-            />
-        </Box>
+                {/* 取引追加・編集フォーム */}
+                <TransactionFormDialog
+                    open={open}
+                    setOpen={setOpen}
+                    handleClose={handleClose}
+                    currentDay={currentDay}
+                    isNew={isNew}
+                    expenseCategories={expenseCategories}
+                    incomeCategories={incomeCategories}
+                    categories={categories}
+                    setCategories={setCategories}
+                    userId={userId}
+                    setTransactions={setTransactions}
+                    fetchTransactions={fetchTransactions}
+                    transactions={transactions}
+                    selectedRow={selectedRow}
+                    setRows={setRows}
+                />
+                {/* フラッシュメッセージ */}
+                <FlashMessage
+                    open={state.open}
+                    message={state.message}
+                    handleClose={handleSnackBarClose}
+                />
+            </Box>
+        </>
     )
 }

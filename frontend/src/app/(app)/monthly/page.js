@@ -1,12 +1,10 @@
 'use client'
 import Header from '@/app/(app)/Header'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth'
 import MonthlySummary from '@/components/MonthlySummary'
-import { useTransactions } from '@/hooks/useTransactions'
 import TransactionFormDialog from '@/components/TransactionFormDialog'
 import { useAppContext } from '@/context/AppContext'
-import { formatCurrency } from '@/app/utils/formatting'
 import Calendar from '@/components/Calendar'
 
 const Top = () => {

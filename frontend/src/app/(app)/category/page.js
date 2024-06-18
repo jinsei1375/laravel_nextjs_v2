@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react'
 import axios from '@/lib/axios'
 import { useAuth } from '@/hooks/auth'
 import { Typography } from '@mui/material'
+import Header from '../Header'
 
 function EditExpenseToolbar(props) {
     const { setExpenseRows, setExpenseRowModesModel, expenseRows } = props
@@ -434,75 +435,82 @@ export default function FullFeaturedCrudGrid() {
     ]
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            {/* 支出カテゴリー一覧 */}
-            <Box sx={{ width: '50%' }}>
-                <Typography variant="h6">支出カテゴリー</Typography>
-                <Box
-                    sx={{
-                        width: '100%',
-                        '& .actions': {
-                            color: 'text.secondary',
-                        },
-                        '& .textPrimary': {
-                            color: 'text.primary',
-                        },
-                    }}>
-                    <DataGrid
-                        rows={expenseRows}
-                        columns={expenseColumns}
-                        editMode="row"
-                        rowModesModel={expenseRowModesModel}
-                        onRowModesModelChange={handleExpenseRowModesModelChange}
-                        onRowEditStop={handleRowEditStop}
-                        processRowUpdate={processRowUpdate}
-                        slots={{
-                            toolbar: EditExpenseToolbar,
-                        }}
-                        slotProps={{
-                            toolbar: {
-                                setExpenseRows,
-                                setExpenseRowModesModel,
-                                expenseRows,
+        <>
+            <Header title="Category" />
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                {/* 支出カテゴリー一覧 */}
+                <Box sx={{ width: '50%' }}>
+                    <Typography variant="h6">支出カテゴリー</Typography>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            '& .actions': {
+                                color: 'text.secondary',
                             },
-                        }}
-                    />
+                            '& .textPrimary': {
+                                color: 'text.primary',
+                            },
+                        }}>
+                        <DataGrid
+                            rows={expenseRows}
+                            columns={expenseColumns}
+                            editMode="row"
+                            rowModesModel={expenseRowModesModel}
+                            onRowModesModelChange={
+                                handleExpenseRowModesModelChange
+                            }
+                            onRowEditStop={handleRowEditStop}
+                            processRowUpdate={processRowUpdate}
+                            slots={{
+                                toolbar: EditExpenseToolbar,
+                            }}
+                            slotProps={{
+                                toolbar: {
+                                    setExpenseRows,
+                                    setExpenseRowModesModel,
+                                    expenseRows,
+                                },
+                            }}
+                        />
+                    </Box>
+                </Box>
+                {/* 収入カテゴリー一覧 */}
+                <Box sx={{ width: '50%' }}>
+                    <Typography variant="h6">収入カテゴリー</Typography>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            '& .actions': {
+                                color: 'text.secondary',
+                            },
+                            '& .textPrimary': {
+                                color: 'text.primary',
+                            },
+                        }}>
+                        <DataGrid
+                            rows={incomeRows}
+                            columns={incomeColumns}
+                            editMode="row"
+                            rowModesModel={incomeRowModesModel}
+                            onRowModesModelChange={
+                                handleIncomeRowModesModelChange
+                            }
+                            onRowEditStop={handleRowEditStop}
+                            processRowUpdate={processRowUpdate}
+                            slots={{
+                                toolbar: EditIncomeToolbar,
+                            }}
+                            slotProps={{
+                                toolbar: {
+                                    setIncomeRows,
+                                    setIncomeRowModesModel,
+                                    incomeRows,
+                                },
+                            }}
+                        />
+                    </Box>
                 </Box>
             </Box>
-            {/* 収入カテゴリー一覧 */}
-            <Box sx={{ width: '50%' }}>
-                <Typography variant="h6">収入カテゴリー</Typography>
-                <Box
-                    sx={{
-                        width: '100%',
-                        '& .actions': {
-                            color: 'text.secondary',
-                        },
-                        '& .textPrimary': {
-                            color: 'text.primary',
-                        },
-                    }}>
-                    <DataGrid
-                        rows={incomeRows}
-                        columns={incomeColumns}
-                        editMode="row"
-                        rowModesModel={incomeRowModesModel}
-                        onRowModesModelChange={handleIncomeRowModesModelChange}
-                        onRowEditStop={handleRowEditStop}
-                        processRowUpdate={processRowUpdate}
-                        slots={{
-                            toolbar: EditIncomeToolbar,
-                        }}
-                        slotProps={{
-                            toolbar: {
-                                setIncomeRows,
-                                setIncomeRowModesModel,
-                                incomeRows,
-                            },
-                        }}
-                    />
-                </Box>
-            </Box>
-        </Box>
+        </>
     )
 }
