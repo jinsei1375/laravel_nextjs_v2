@@ -39,6 +39,7 @@ const TransactionFormDialog = ({
     })
 
     const {
+        user,
         transactions,
         setTransactions,
         fetchTransactions,
@@ -65,7 +66,7 @@ const TransactionFormDialog = ({
                 if (response.status === 200) {
                     const newTransaction = response.data
                     setTransactions([...transactions, newTransaction])
-                    fetchTransactions()
+                    fetchTransactions(user)
                     console.log(newTransaction)
                     handleSnackBarOpen('追加しました')
                 } else {
@@ -104,7 +105,7 @@ const TransactionFormDialog = ({
                                 : row,
                         ),
                     )
-                    fetchTransactions()
+                    fetchTransactions(user)
                     handleSnackBarOpen('更新しました')
                 } else {
                     console.log('Error occurred while adding category')

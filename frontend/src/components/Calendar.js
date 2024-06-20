@@ -36,14 +36,6 @@ const Calendar = ({
 
     useEffect(setCurrentMonthCallback, [setCurrentMonthCallback])
 
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter(
-            transaction =>
-                new Date(transaction.date).getMonth() ===
-                currentMonth.getMonth(),
-        )
-    }, [transactions, currentMonth])
-
     // useMemoを使用してmonthlyTransactionsを計算
     const calculatedMonthlyTransactions = useMemo(() => {
         // 現在の月に該当するトランザクションをフィルタリング
@@ -60,10 +52,9 @@ const Calendar = ({
     // setMonthlyTransactionsを呼び出して状態を更新する
     useEffect(() => {
         setMonthlyTransactions(calculatedMonthlyTransactions)
-    }, [calculatedMonthlyTransactions, setMonthlyTransactions])
+    }, [calculatedMonthlyTransactions])
 
     useEffect(() => {
-        setMonthlyTransactions(filteredTransactions)
         const filteredDailyBalances = monthlyTransactions.reduce(
             (acc, transaction) => {
                 const date = new Date(transaction.date).getDate()
@@ -87,7 +78,7 @@ const Calendar = ({
             {},
         )
         setDailyBalances(filteredDailyBalances)
-    }, [filteredTransactions, monthlyTransactions])
+    }, [monthlyTransactions])
 
     useEffect(() => {
         const filteredCalendarEvents = Object.keys(dailyBalances).map(date => {
