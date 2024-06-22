@@ -18,6 +18,7 @@ import { formatCurrency } from '@/app/utils/formatting'
 import MonthlySummary from '@/components/MonthlySummary'
 import TransactionFormDialog from '@/components/TransactionFormDialog'
 import Header from '../Header'
+import { useAppContext } from '@/context/AppContext'
 
 function EditExpenseToolbar(props) {
     const {
@@ -73,11 +74,9 @@ export default function Report() {
     const [currentMonth, setCurrentMonth] = useState(
         new Date(today.getFullYear(), today.getMonth(), 1),
     )
-    const [transactions, setTransactions] = useState([])
     const [monthlyTransactions, setMonthlyTransactions] = useState([])
     const [open, setOpen] = useState(false)
     const [rows, setRows] = useState([])
-    const [categories, setCategories] = useState([])
     const [expenseCategories, setExpenseCategories] = useState([])
     const [incomeCategories, setIncomeCategories] = useState([])
     const [isNew, setIsNew] = useState(false)
@@ -89,10 +88,19 @@ export default function Report() {
     const { user } = useAuth({ middleware: 'auth' })
     const userId = user.id
 
+    const {
+        fetchCategories,
+        fetchTransactions,
+        transactions,
+        setTransactions,
+        categories,
+        setCategories,
+    } = useAppContext()
+
     useEffect(() => {
         if (user) {
-            fetchTransactions()
-            fetchCategories()
+            fetchTransactions(user)
+            fetchCategories(user)
             setCurrentDay(today)
         }
     }, [user])
@@ -126,6 +134,10 @@ export default function Report() {
         console.log(filteredTransactions)
     }, [transactions, currentMonth])
 
+    useEffect(() => {
+        console.log(transactions)
+    }, [transactions])
+
     const handleClose = () => {
         setOpen(false)
     }
@@ -137,29 +149,6 @@ export default function Report() {
         setSelectedRow(row)
         console.log(row)
     }
-
-    // カテゴリー取得処理
-    const fetchCategories = async () => {
-        try {
-            const response = await axios.get(
-                `http://localhost/api/${userId}/category/`,
-            )
-            const fetchedCategories = response.data
-
-            const filteredExpenseCategories = fetchedCategories.filter(
-                cat => cat.type === 'expense',
-            )
-            const filteredIncomeCategories = fetchedCategories.filter(
-                cat => cat.type === 'income',
-            )
-            setCategories(filteredExpenseCategories)
-            setExpenseCategories(filteredExpenseCategories)
-            setIncomeCategories(filteredIncomeCategories)
-        } catch (err) {
-            console.log(err)
-        }
-    }
-
     // 次の月へ
     const goToNextMonth = () => {
         setCurrentMonth(prevMonth => {
@@ -178,19 +167,6 @@ export default function Report() {
         })
     }
 
-    // 取引取得処理
-    const fetchTransactions = async () => {
-        try {
-            const response = await axios.get(
-                `http://localhost/api/${userId}/transaction/`,
-            )
-
-            setTransactions(response.data)
-        } catch (err) {
-            console.log(err)
-        }
-    }
-
     // 削除処理
     const handleDeleteClick = id => async () => {
         console.log(id)
@@ -201,7 +177,7 @@ export default function Report() {
             )
             if (response.status === 200) {
                 setRows(rows.filter(row => row.transactionId !== id))
-                fetchTransactions()
+                // fetchTransactions(user)
                 handleSnackBarOpen('削除しました')
             } else {
                 console.log('Error occurred while adding category')
@@ -347,7 +323,6 @@ export default function Report() {
                     setCategories={setCategories}
                     userId={userId}
                     setTransactions={setTransactions}
-                    fetchTransactions={fetchTransactions}
                     transactions={transactions}
                     selectedRow={selectedRow}
                     setRows={setRows}

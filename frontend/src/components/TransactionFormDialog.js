@@ -65,7 +65,10 @@ const TransactionFormDialog = ({
                 )
                 if (response.status === 200) {
                     const newTransaction = response.data
-                    setTransactions([...transactions, newTransaction])
+                    setTransactions(prevTransactions => [
+                        ...prevTransactions,
+                        newTransaction,
+                    ])
                     fetchTransactions(user)
                     console.log(newTransaction)
                     handleSnackBarOpen('追加しました')

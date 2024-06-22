@@ -65,9 +65,9 @@ export const AppContextProvider = ({ children }) => {
                     },
                 )
                 if (response.status === 200) {
+                    // fetchTransactions(user)
                     const newTransaction = response.data
                     setTransactions([...transactions, newTransaction])
-                    fetchTransactions()
                     console.log(newTransaction)
                     handleSnackBarOpen('追加しました')
                 } else {
@@ -84,29 +84,13 @@ export const AppContextProvider = ({ children }) => {
                     },
                 )
                 if (response.status === 200) {
-                    const updatedRow = {
-                        id: data.id,
-                        title: response.data.title,
-                        category: response.data.category
-                            ? response.data.category.name
-                            : 'N/A',
-                        type:
-                            response.data.category.type == 'income'
-                                ? '収入'
-                                : '支出',
-                        amount: response.data.amount,
-                        date: response.data.date,
-                        transactionId: response.data.id,
-                        categoryId: response.data.category.id,
-                    }
-                    setRows(oldRows =>
-                        oldRows.map(row =>
-                            row.transactionId === data.transactionId
-                                ? updatedRow
-                                : row,
-                        ),
+                    // fetchTransactions(user)
+                    const updatedTransactions = transactions.map(t =>
+                        t.id === data.transactionId
+                            ? { ...t, ...response.data }
+                            : t,
                     )
-                    fetchTransactions()
+                    setTransactions(updatedTransactions)
                     handleSnackBarOpen('更新しました')
                 } else {
                     console.log('Error occurred while adding category')
