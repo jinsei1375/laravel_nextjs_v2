@@ -40,7 +40,6 @@ const TransactionFormDialog = ({
 
     const {
         user,
-        transactions,
         setTransactions,
         fetchTransactions,
         setCategories,
@@ -191,6 +190,16 @@ const TransactionFormDialog = ({
                 category: '',
                 content: '',
             })
+            // 日付を "yyyy-MM-dd" フォーマットに変換
+            const formattedDate = new Intl.DateTimeFormat('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            })
+                .format(new Date(currentDay))
+                .replace(/\//g, '-')
+            setValue('date', formattedDate)
+            setValue('title', '')
         }
     }, [isNew, selectedRow, open])
 

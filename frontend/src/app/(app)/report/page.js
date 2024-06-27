@@ -25,7 +25,7 @@ function EditExpenseToolbar(props) {
         setOpen,
         setIsNew,
         // reset,
-        // currentDay,
+        currentDay,
         currentMonth,
         goToNextMonth,
         goToPrevMonth,
@@ -41,6 +41,7 @@ function EditExpenseToolbar(props) {
         // })
         setOpen(true)
         setIsNew(true)
+        console.log(currentDay)
     }
 
     return (
@@ -77,8 +78,6 @@ export default function Report() {
     const [monthlyTransactions, setMonthlyTransactions] = useState([])
     const [open, setOpen] = useState(false)
     const [rows, setRows] = useState([])
-    const [expenseCategories, setExpenseCategories] = useState([])
-    const [incomeCategories, setIncomeCategories] = useState([])
     const [isNew, setIsNew] = useState(false)
     const [state, setState] = useState({
         open: false,
@@ -92,7 +91,6 @@ export default function Report() {
         fetchCategories,
         fetchTransactions,
         transactions,
-        setTransactions,
         categories,
         setCategories,
     } = useAppContext()
@@ -317,13 +315,9 @@ export default function Report() {
                     handleClose={handleClose}
                     currentDay={currentDay}
                     isNew={isNew}
-                    expenseCategories={expenseCategories}
-                    incomeCategories={incomeCategories}
                     categories={categories}
                     setCategories={setCategories}
                     userId={userId}
-                    setTransactions={setTransactions}
-                    transactions={transactions}
                     selectedRow={selectedRow}
                     setRows={setRows}
                 />
