@@ -57,7 +57,7 @@ const TransactionFormDialog = ({
                     `http://localhost/api/${userId}/transaction`,
                     {
                         date: data.date,
-                        amount: data.amount,
+                        amount: parseFloat(data.amount),
                         title: data.title,
                         category: data.category,
                     },
@@ -95,11 +95,19 @@ const TransactionFormDialog = ({
                             response.data.category.type == 'income'
                                 ? '収入'
                                 : '支出',
-                        amount: response.data.amount,
+                        amount: parseFloat(response.data.amount),
                         date: response.data.date,
                         transactionId: response.data.id,
                         categoryId: response.data.category.id,
                     }
+                    console.log(response.data)
+                    setTransactions(prevTransactions =>
+                        prevTransactions.map(transaction =>
+                            transaction.id === response.data.id
+                                ? response.data
+                                : transaction,
+                        ),
+                    )
                     setRows(oldRows =>
                         oldRows.map(row =>
                             row.transactionId === data.transactionId
@@ -107,7 +115,6 @@ const TransactionFormDialog = ({
                                 : row,
                         ),
                     )
-                    fetchTransactions(user)
                     handleSnackBarOpen('更新しました')
                 } else {
                     console.log('Error occurred while adding category')
